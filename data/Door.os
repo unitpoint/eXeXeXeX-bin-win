@@ -1,3 +1,36 @@
+/******************************************************************************
+* Copyright (C) 2014 Evgeniy Golovin (evgeniy.golovin@unitpoint.ru)
+*
+* Please feel free to contact me at anytime, 
+* my email is evgeniy.golovin@unitpoint.ru, skype: egolovin
+*
+* eXeXeXeX is a 4X genre of strategy-based video game in which player 
+* "eXplore, eXpand, eXploit, and eXterminate" the world
+* 
+* Latest source code
+*	eXeXeXeX: https://github.com/unitpoint/eXeXeXeX
+* 	OS2D engine: https://github.com/unitpoint/os2d
+*
+* Permission is hereby granted, free of charge, to any person obtaining
+* a copy of this software and associated documentation files (the
+* "Software"), to deal in the Software without restriction, including
+* without limitation the rights to use, copy, modify, merge, publish,
+* distribute, sublicense, and/or sell copies of the Software, and to
+* permit persons to whom the Software is furnished to do so, subject to
+* the following conditions:
+*
+* The above copyright notice and this permission notice shall be
+* included in all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+******************************************************************************/
+
 Door = extends Tile {
 	STATE_CLOSED = 0,
 	STATE_OPENING = 1,
@@ -6,8 +39,8 @@ Door = extends Tile {
 
 	__construct = function(game, x, y){
 		super(game, x, y)
-		@priority = TILE_DOOR_PRIORITY
-		@front.priority = @FRONT_DOOR_PRIORITY
+		@priority = TILE_PRIORITY_DOOR
+		@front.priority = @PRIORITY_FRONT_DOOR
 		// @front.priority = 5
 		@handle = Sprite().attrs {
 			resAnim = res.get(TILES_INFO[@frontType].handle),
@@ -19,7 +52,7 @@ Door = extends Tile {
 		@handleShadow = Sprite().attrs {
 			resAnim = res.get(TILES_INFO[@frontType].handleShadow),
 			pivot = @handle.pivot,
-			pos = @handle.pos + vec2(@width * 0.02, @height * 0.04),
+			pos = @handle.pos + vec2(@width * 0.02, @height * 0.05),
 			opacity = 0.5,
 			priority = 1,
 			parent = @front,
@@ -46,14 +79,14 @@ Door = extends Tile {
 		@removeTimeout(@timeoutHandle); @timeoutHandle = null
 		@handleAction.target.removeAction(@handleAction)
 		
-		var destAngle = 360*3.3
+		var destAngle = 360*2.3
 		@handleAction = @handle.addTweenAction {
 			duration = (1 - @handle.angle / destAngle) * 1.0,
 			angle = destAngle,
 			ease = Ease.CUBIC_IN_OUT,
 			tickCallback = function(){
 				@handleShadow.angle = @handle.angle
-			}.bind(this),
+			},
 			doneCallback = function(){
 				@back.visible = true
 				@game.updateTiledmapShadowViewport(@tileX-1, @tileY-1, @tileX+1, @tileY+1)
@@ -66,10 +99,10 @@ Door = extends Tile {
 						@state = @STATE_OPENED
 						@timeoutHandle = @addTimeout(1.0, function(){
 							@close()
-						}.bind(this))
-					}.bind(this),
+						})
+					},
 				}
-			}.bind(this),
+			},
 		}
 	},
 	
@@ -87,7 +120,7 @@ Door = extends Tile {
 			if(ent){
 				@open()
 			}
-		}.bind(this))
+		})
 		
 		@handleAction = @front.addTweenAction {
 			duration = 1.0,
@@ -103,12 +136,12 @@ Door = extends Tile {
 					ease = Ease.CUBIC_IN_OUT,
 					tickCallback = function(){
 						@handleShadow.angle = @handle.angle
-					}.bind(this),
+					},
 					doneCallback = function(){
 						@handleAction = null
-					}.bind(this),
+					},
 				}
-			}.bind(this),
+			},
 		}
 	},
 	

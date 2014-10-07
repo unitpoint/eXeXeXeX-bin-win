@@ -1,9 +1,44 @@
+/******************************************************************************
+* Copyright (C) 2014 Evgeniy Golovin (evgeniy.golovin@unitpoint.ru)
+*
+* Please feel free to contact me at anytime, 
+* my email is evgeniy.golovin@unitpoint.ru, skype: egolovin
+*
+* eXeXeXeX is a 4X genre of strategy-based video game in which player 
+* "eXplore, eXpand, eXploit, and eXterminate" the world
+* 
+* Latest source code
+*	eXeXeXeX: https://github.com/unitpoint/eXeXeXeX
+* 	OS2D engine: https://github.com/unitpoint/os2d
+*
+* Permission is hereby granted, free of charge, to any person obtaining
+* a copy of this software and associated documentation files (the
+* "Software"), to deal in the Software without restriction, including
+* without limitation the rights to use, copy, modify, merge, publish,
+* distribute, sublicense, and/or sell copies of the Software, and to
+* permit persons to whom the Software is furnished to do so, subject to
+* the following conditions:
+*
+* The above copyright notice and this permission notice shall be
+* included in all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+******************************************************************************/
+
 Entity = extends Actor {
 	__object = {
 		tileX = -1,
 		tileY = -1,
 		prevTileX = -1,
 		prevTileY = -1,
+		pickTileX = null,
+		pickTileY = null,
 		
 		breathingAction = null,
 		breathingSpeed = 1.0,
@@ -15,11 +50,14 @@ Entity = extends Actor {
 		// moveTween = null,
 		
 		isPlayer = false,
+		isDead = false,
 		
 		moveAnimatedX = false,
 		moveAnimatedY = false,
 		moving = false,
-		pushing = false,
+		attacking = false,
+		isMoveStarted = false,
+		pushingByEnt = null,
 		// moveActive = false,
 		moveDir = vec2(0, 0), // vec2(randSign(), randSign()),
 		prevMoveDir = vec2(0, 0),
@@ -38,7 +76,7 @@ Entity = extends Actor {
 		@sprite = Sprite().attrs {
 			resAnim = res.get(@name),
 			pivot = vec2(0.5, 0.5),
-			scale = 0.9,
+			scale = @idealScale = 0.9,
 			parent = this,
 		}
 		@pivot = vec2(0.5, 0.5)
@@ -46,6 +84,9 @@ Entity = extends Actor {
 		@sprite.pos = @idealPos = @size/2
 		@touchChildrenEnabled = false
 		// @breathing()
+		
+		@addUpdate(@update.bind(this))
+		@addUpdate(0.1, @checkFalling.bind(this))
 	},
 	
 	centerSprite = function(){
@@ -57,25 +98,37 @@ Entity = extends Actor {
 		}
 	},
 	
-	setTile = function(tx, ty){
-		if(@tileX != tx){
+	onTilePosChanged = function(){
+	
+	},
+	
+	setViewSide = function(newScaleX){
+		if(newScaleX != @scaleX){
 			@replaceTweenAction {
 				name = "scaleX",
 				duration = 0.15 * @moveSpeed,
-				scaleX = @tileX > tx ? 1 : -1,
+				scaleX = newScaleX,
 				ease = Ease.CUBIC_IN_OUT,
 			}
+		}
+	},
+	
+	setTile = function(tx, ty){
+		@tileX == tx && @tileY == ty && return;
+		if(@tileX != tx){
+			@setViewSide(@tileX > tx ? 1 : -1)
 		}
 		@game.setEntTile(this, tx, ty)
 		
 		var dx = @tileX - @prevTileX
 		if((dx == 1 || dx == -1) && @prevTileY == @tileY){
 			var ent = @getTileEnt(@prevTileX, @prevTileY - 1)
-			if(ent && !ent.moving){
+			if(ent && !ent.moving && !ent.fly){
 				ent.moveDir = vec2(dx, 0)
-				ent.update()
+				ent.updateMove()
 			}
 		}
+		// @onTileChanged()
 	},
 	
 	setTilePos = function(tx, ty){
@@ -105,28 +158,82 @@ Entity = extends Actor {
 	},
 	
 	pushByEnt = function(ent, dx, dy){
-		if(!@moving && !@pushing){
+		if(!@moving && !@pushingByEnt){
+			if(ent.isPlayer != @isPlayer && (ent is NPC == false && this is NPC == false)){
+				@addTimeout(0.05, function(){ 
+					!ent.attacking && ent.attack(this, dx)
+				})
+				@addTimeout(0.15, function(){ 
+					!@attacking && @attack(ent, -dx) // , speed, doneCallback)
+				})
+				// return
+			}
 			var tileX, tileY = @tileX, @tileY
-			@moveDir, @pushing = vec2(dx, dy), true
-			@update()
-			@pushing = false
+			@moveDir, @pushingByEnt = vec2(dx, dy), ent
+			@updateMove()
+			@pushingByEnt = null
 			return tileX != @tileX || tileY != @tileY
 		}
 	},
 	
+	onMoveStarted = function(){
+		var side = @prevTileX < @tileX ? 1 : -1
+		var action = RepeatForeverAction(SequenceAction(
+			TweenAction {
+				duration = 0.15 * @moveSpeed,
+				angle = -5 * side,
+				// ease = Ease.CUBIC_IN_OUT,
+			},
+			TweenAction {
+				duration = 0.15 * @moveSpeed,
+				angle = 5 * side,
+				// ease = Ease.CUBIC_IN_OUT,
+			},
+		))
+		action.name = "moveAngle"
+		@replaceAction(action)
+	},
+	
 	onMoveFinished = function(){
-		
+		@replaceTweenAction {
+			name = "moveAngle",
+			duration = 0.1 * @moveSpeed,
+			angle = 0,
+		}
+	},
+	
+	onTileChanged = function(){
+	
 	},
 	
 	checkMoveDir = function(){
 	
 	},
 	
-	update = function(){
-		var pos = @pos
-		var tileX, tileY = @game.posToTile(pos)
+	updateMoveDir = function(){
+		var tx, ty = @tileX, @tileY
+		@_updateMoveDir()
+		@_checkFalling()
+		if(tx != @tileX || ty != @tileY){
+			@onTileChanged()
+		}
+	},
+	
+	checkFalling = function(){
+		var tx, ty = @tileX, @tileY
+		// @_updateMoveDir()
+		@_checkFalling()
+		if(tx != @tileX || ty != @tileY){
+			@onTileChanged()
+		}
+	},
+
+	
+	_updateMoveDir = function(){
+		// var pos = @pos
+		var tileX, tileY = @game.posToTile(@pos)
 		var curTileX, curTileY = tileX, tileY
-		var pickTileX, pickTileY
+		// var pickTileX, pickTileY
 		var sensorSizeX, sensorSizeY = 0.4, 0.4
 		// var isDestTile = tileX == @tileX && tileY == @tileY
 		if(@moveDir.x != 0 || @moveDir.y != 0) do{
@@ -172,6 +279,7 @@ Entity = extends Actor {
 					}
 					if(empty){
 						@setTile(tileX + dx, tileY - 1)
+						// @onTileChanged()
 						var time = 0.3 * @moveSpeed
 						var pos = @game.tileToCenterPos(tileX + dx, tileY - 1)
 						
@@ -180,18 +288,18 @@ Entity = extends Actor {
 							duration = time * 1.7,
 							x = pos.x,
 							// ease = Ease.QUAD_IN,
-							doneCallback = function(){ @moveAnimatedX = false }.bind(this),
+							doneCallback = function(){ @moveAnimatedX = false },
 						}
 						@moveAnimatedY = @addTweenAction {
 							// name = "jumping",
 							duration = time * 1.5,
 							y = pos.y,
 							ease = Ease.BACK_IN_OUT,
-							doneCallback = function(){ @moveAnimatedY = false }.bind(this),
+							doneCallback = function(){ @moveAnimatedY = false },
 						}
 						return true
 					}
-				}.bind(this)
+				}
 				
 				if(@isTileEmptyToMove(tileX + dx, tileY)){
 					// print "side move: ${tileX + dx}, ${tileY}"
@@ -204,13 +312,15 @@ Entity = extends Actor {
 					{
 						return
 					}
-					@setTile(tileX += dx, tileY)
+					@setTile(tileX + dx, tileY)
+					// @onTileChanged()
 					break
 				}
 				var ent = @getTileEnt(tileX + dx, tileY)
 				if(ent.pushByEnt(this, dx, 0) && @isTileEmptyToMove(tileX + dx, tileY)){
 					// print "push & side move: ${tileX + dx}, ${tileY}"
-					@setTile(tileX += dx, tileY)
+					@setTile(tileX + dx, tileY)
+					// @onTileChanged()
 					break
 				}
 				if(dy < 1 && (@fly 
@@ -222,22 +332,8 @@ Entity = extends Actor {
 				{
 					return
 				}
-				if(@game.player === this)
-				switch(@game.inventary.mode){
-				case "pick":
-					pickTileX = tileX + dx
-					// @game.pickTile(tileX + dx, tileY)
-					break
-					
-				default:
-				case "move":
-					break
-					
-				case "ladders":
-					break
-					
-				case "attack":
-					break
+				if(@game.player === this){
+					@pickTileX = tileX + dx
 				}
 			} }while(false)
 			if(!@moveAnimatedY && dy != 0){
@@ -263,6 +359,7 @@ Entity = extends Actor {
 						{
 							// print "jump move: ${tileX}, ${tileY - 1}"
 							@setTile(tileX, tileY - 1)
+							// @onTileChanged()
 							var time = 0.3 * @moveSpeed
 							var pos = @game.tileToCenterPos(tileX, tileY - 1)
 							@moveAnimatedY = @addTweenAction {
@@ -270,7 +367,7 @@ Entity = extends Actor {
 								duration = time * 1.5,
 								y = pos.y,
 								ease = Ease.BACK_IN_OUT,
-								doneCallback = function(){ @moveAnimatedY = false }.bind(this),
+								doneCallback = function(){ @moveAnimatedY = false },
 							}
 							return
 						}
@@ -282,41 +379,38 @@ Entity = extends Actor {
 					}
 					// print "vert move: ${tileX}, ${tileY + dy}"
 					@setTile(tileX, tileY + dy)
+					// @onTileChanged()
 					break
 				}
-				if(@game.player === this)
-				switch(@game.inventary.mode){
-				case "pick":
-					pickTileY = tileY + dy
-					// @game.pickTile(tileX, tileY + dy)
-					break
-					
-				default:
-				case "move":
-					break
-					
-				case "ladders":
-					break
-					
-				case "attack":
-					break
+				if(@game.player === this){
+					@pickTileY = tileY + dy
 				}
 			}
 		}while(false)
-		
+		curTileY == @tileY && @_checkFalling()
+	},
+	
+	_checkFalling = function(){
 		var tileX, tileY = @tileX, @tileY
-		if(!@fly && !@moveAnimatedY && tileY == curTileY 
+		if((!@fly || @isDead) && !@moveAnimatedY
 			&& @isTileEmptyToFall(tileX, tileY + 1)
 			&& @getAutoFrontType(tileX, tileY) != TILE_TYPE_LADDERS)
 		{
 			// print "falling move: ${tileX}, ${tileY + 1}"
-			@setTile(tileX, ++tileY)
+			@setTile(tileX, tileY + 1)
+			// @onTileChanged()
 			@moving = true
 		}
-		
+	},
+	
+	update = function(){
 		if(@moving){
-			var dest = @game.tileToCenterPos(tileX, tileY)
-			var offs = dest - pos
+			if(!@isMoveStarted){
+				@isMoveStarted = true
+				@onMoveStarted()
+			}
+			var dest = @game.tileToCenterPos(@tileX, @tileY)
+			var offs = dest - @pos
 			var len = #offs
 			if(len > 0){
 				var speed = TILE_SIZE / (0.3 * @moveSpeed)
@@ -342,30 +436,62 @@ Entity = extends Actor {
 			if(!@moveAnimatedX && !@moveAnimatedY){
 				if(@x == dest.x && @y == dest.y){
 					@moving = false
-					if(pickTileX || pickTileY){
-						@game.pickTile(pickTileX || tileX, pickTileY || tileY)
-					}
+					@isMoveStarted = false
 					@onMoveFinished()
+					if(@pickTileX || @pickTileY){
+						@game.pickTile(@pickTileX || @tileX, @pickTileY || @tileY)
+						@pickTileX = @pickTileY = null
+					}
 				}
 			}
 		}
 	},
+
+	updateMove = function(){
+		@updateMoveDir()
+		@update()
+	},
+	
+	playDeathSound = function(){
+	},
+	
+	die = function(doneCallback){
+		@stopBreathing()
+		@isPlayer = false
+		@isDead = true
+		@sprite.addTweenAction {
+			duration = 2,
+			angle = math.random(-100, 100), // 360 * 10,
+			scale = 0.5,
+			opacity = 0,
+			color = Color(0.5, 0, 0),
+			ease = Ease.CUBIC_IN,
+			doneCallback = function(){
+				@addTimeout(1, doneCallback)
+			},
+		}
+		@playDeathSound()
+	},
 	
 	stopBreathing = function(){
-		@breathingAction || return;
-		@centerSprite()
-		@sprite.replaceTweenAction {
-			name = "breathing",
-			duration = 0.1,
-			scale = 0.9,
+		if(@breathingAction){
+			@centerSprite()
+			@sprite.removeActionsByName("breathing")
+			/* @sprite.replaceTweenAction {
+				name = "breathing",
+				duration = 0.1,
+				scale = 0.9,
+			} */
+			@breathingAction = null
 		}
-		@breathingAction = null
 	},
 	
 	startBreathing = function(speed){
-		@breathingAction && return;
+		@isDead && return;
+		@breathingAction && (!speed || @breathingSpeed == speed) && return;
 		@centerSprite()
 		speed && @breathingSpeed = speed
+		this is Player && print("startBreathing#${@__id}:${@classname}:${@__name}, speed: ${@breathingSpeed}")
 		var anim = function(){
 			var action = SequenceAction(
 				TweenAction {
@@ -383,12 +509,20 @@ Entity = extends Actor {
 			action.doneCallback = anim
 			@sprite.replaceAction(action)
 			@breathingAction = action
-		}.bind(this)
+		}
 		anim()
 	},
 	
-	attack = function(side, speed, callback){
+	useStamina = function(){
+	},
+	
+	attack = function(enemy, side, speed, doneCallback){
+		@isDead && return;
+		enemy.useStamina(60 * math.random(0.9, 1.1))
 		@stopBreathing()
+		@setViewSide(side < 0 ? 1 : -1)
+		// print "attack:${@classname}#${@__id}, side: ${side}"
+		@scaleX < 0 && side = -side
 		// @centerSprite()
 		// @sprite.pos = @idealPos
 		if(functionOf(side)){
@@ -397,28 +531,31 @@ Entity = extends Actor {
 			speed, callback = null, speed
 		}
 		speed && @attackSpeed = speed
-		var pos2 = @idealPos + vec2(128 * 0.2 * (side || 1), 0)
-		var anim = function(){
-			@sprite.replaceTweenAction {
-				name = "attack",
-				duration = 0.15 * math.random(0.9, 1.1) / @breathingSpeed,
-				pos = pos2,
-				angle = math.random(-10, 10),
-				ease = Ease.QUINT_IN,
-				doneCallback = function(){
-					// print "attack mid, attackCallback: ${@attackCallback}"
-					@sprite.replaceTweenAction {
-						name = "attack",
-						duration = 0.8 * math.random(0.9, 1.1) / @breathingSpeed,
-						pos = @idealPos,
-						angle = 0,
-						ease = Ease.CIRC_IN_OUT,
-						doneCallback = callback // anim
+		var destPos = @idealPos + vec2(TILE_SIZE * 0.3 * (side || 1), 0)
+		@attacking = @sprite.replaceTweenAction {
+			name = "attack",
+			duration = 0.02 * math.random(0.9, 1.1) / @attackSpeed,
+			scale = @idealScale,
+			pos = destPos,
+			angle = math.random(-15, 15),
+			ease = Ease.QUINT_IN,
+			doneCallback = function(){
+				// print "attack mid, attackCallback: ${@attackCallback}"
+				@attacking = @sprite.replaceTweenAction {
+					name = "attack",
+					duration = 0.2 * math.random(0.9, 1.1) / @attackSpeed,
+					pos = @idealPos,
+					angle = 0,
+					ease = Ease.CIRC_IN_OUT,
+					doneCallback = function(){
+						@attacking = null
+						@startBreathing()
+						doneCallback()
 					}
-					@attackCallback()
-				}.bind(this)
+				}
+				var attackCallback = @attackCallback
+				attackCallback() // use function's this instead of current this
 			}
-		}.bind(this)
-		anim()
+		}
 	},
 }
