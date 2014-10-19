@@ -103,18 +103,18 @@ Backpack = extends Actor {
 			opacity = 0.5,
 			touchEnabled = false,
 		}
-		@bulletsCount = []
-		@bulletsCount[] = TextField().attrs {
+		@bulletsText = BorderedText().attrs {
 			resFont = res.get("test_2"),
 			vAlign = TEXT_VALIGN_BOTTOM,
 			hAlign = TEXT_HALIGN_RIGHT,
 			text = @_bullets = Player.bullets,
 			pos = @bulletsSprite.pos + @bulletsSprite.size/2 - vec2(4, 5),
 			color = Color.fromInt(0xf9a288),
+			borderColor = Color.fromInt(0x391a05),
 			priority = 1,
 			parent = this,
 		}
-		var cloneText = function(delta, color){
+		/* var cloneText = function(delta, color){
 			var originText = @bulletsCount.first
 			var text = TextField().attrs {
 				resFont = originText.resFont,
@@ -135,7 +135,7 @@ Backpack = extends Actor {
 			for(var y = -1; y < 2; y+=2){
 				cloneText(vec2(x, y), color)
 			}
-		}
+		} */
 		
 		@countBulletsUpdateHandle = null
 		
@@ -145,9 +145,10 @@ Backpack = extends Actor {
 	__set@bullets = function(value){
 		@_bullets == value && return;
 		@_bullets = value
-		for(var _, item in @bulletsCount){
+		@bulletsText.text = value
+		/* for(var _, item in @bulletsCount){
 			item.text = value
-		}
+		} */
 	},
 	
 	updateBullets = function(){
@@ -181,6 +182,7 @@ Backpack = extends Actor {
 				@bullets = math.round(startBullets + delta * t)
 			}
 		})
+		playMoneySound()
 	},
 	
 	updateItems = function(){
@@ -189,6 +191,10 @@ Backpack = extends Actor {
 	},
 	
 	addItem = function(type, count){
+		if(type == ITEM_TYPE_BULLETS){
+			Player.bullets += (count || 1) * math.round(math.random(50, 150))
+			return true
+		}
 		return @pack.addItem(type, count)
 	},
 	
@@ -202,13 +208,28 @@ Backpack = extends Actor {
 		}
 	},
 	
+	getState = function(){
+		return {
+			cols = Backpack.cols,
+			rows = Backpack.rows,
+			pack = Backpack.pack.getState(),
+		}
+	},
+	
+	loadState = function(state){
+		Backpack.cols = math.max(Backpack.cols, toNumber(state.cols))
+		Backpack.rows = math.max(Backpack.rows, toNumber(state.rows))
+		Backpack.pack = ItemsPack(Backpack.cols * Backpack.rows)
+		Backpack.pack.loadState(state.pack)
+	},
+	
 	initPack = function(){
-		@cols, @rows = 3, 2
-		@pack = ItemsPack(@cols * @rows)
+		Backpack.cols, Backpack.rows = 3, 2
+		Backpack.pack = ItemsPack(Backpack.cols * Backpack.rows)
 		
-		for(var i, type in [1, 3]){
+		for(var i, type in [1, 3, 6]){
 		// for(var i, type in [1, 3, 11, 13]){
-			@pack.items[i] = {type = type, count = 1}
+			Backpack.pack.items[i] = {type = type, count = 1}
 		}
 		
 		/* for(var type, item in ITEMS_INFO){
@@ -230,7 +251,7 @@ Backpack = extends Actor {
 	},
 	
 	checkTutorial = function(target){
-		target || target = stage
+		target || target = @game
 		var allDone = true
 		if(!GAME_SETTINGS.doneTutorials.setPickItem){
 			if(Player.pickItemType){

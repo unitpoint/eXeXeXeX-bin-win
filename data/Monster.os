@@ -42,8 +42,76 @@ Monster = extends Entity {
 		@patrolArea = null
 		@moveTimeoutHandle = null
 		@warnOnMove = true
+		
+		@healthRecoveryTime = null
+		if(this is NPC == false){
+			@hudStamina = HealthBar("stamina-monster").attrs {
+				name = "stamina",
+				// pivot = vec2(0, 1),
+				// angle = -90,
+				// pos = vec2(@width-6, @height-6),
+				// width = @width - 6*2,
+				pos = vec2(8, @height - 13),
+				width = @width - 8*2,
+				height = 10,
+				// size = vec2(@width, 6),
+				parent = this,
+				value = 0.6,
+				visible = false,
+			}
+			@attackIcon = Sprite().attrs {
+				resAnim = res.get("monster-attack-icon"),
+				pivot = vec2(0, 1),
+				pos = vec2(8, @height - 13-2),
+				parent = this,
+			}
+			@attackLevelText = BorderedText().attrs {
+				resFont = res.get("test_2"),
+				vAlign = TEXT_VALIGN_BOTTOM,
+				hAlign = TEXT_HALIGN_LEFT,
+				// text = @attackLevel.." (${@attackValue})",
+				color = Color.WHITE, // fromInt(0xffeb00),
+				borderColor = Color.fromInt(0x840000),
+				pos = vec2(@attackIcon.x + @attackIcon.width + 2, @attackIcon.y),
+				parent = this,
+			}
+			@addTimeout(0.001, function(){
+				var scale = 1 + math.abs(@tileY - @game.tiledmapFloor) / 50
+				@attackValue *= scale
+				@healthValue *= scale
+				@attackLevelText.text = @attackLevel // .." (${@attackValue})"
+			})
+		}
 	},
 	
+	damage = function(value, attacker){
+		print "monster damaged: ${value}"
+		@damageValue += value
+		@hudStamina.visible = true
+		if(@damageValue > @healthValue){
+			@damageValue = @healthValue
+			@hudStamina.visible = false
+			@die()
+		}
+		@hudStamina.value = 1 - @damageValue / @healthValue
+		@healthRecoveryTime || @healthRecoveryTime = @game.time + @attackLevel * 15
+	},
+	
+	getState = function(){
+		var state = super()
+		state.patrolArea = @patrolArea
+		return state
+	},
+	
+	loadState = function(state){
+		super(state)
+		@patrolArea = {
+			start = vec2(state.patrolArea.start.x, state.patrolArea.start.y),
+			end = vec2(state.patrolArea.end.x, state.patrolArea.end.y),
+		}
+		print "load patrol area ${@classname}#${@__id}:${@name}, tile: ${@tileX}, ${@tileY}: ${@patrolArea}"
+	},
+
 	createPatrolAreaIfNecessary = function(){
 		if(@fly){
 			@patrolArea || @{
@@ -60,7 +128,7 @@ Monster = extends Entity {
 			if(tx < @patrolArea.start.x || tx > @patrolArea.end.x
 				|| ty < @patrolArea.start.y || ty > @patrolArea.end.y)
 			{
-				// print "delete patrol area ${@classname}#${@__id}:${@name}, tile: ${@tileX}, ${@tileY}: ${@patrolArea}"
+				print "delete patrol area ${@classname}#${@__id}:${@name}, tile: ${@tileX}, ${@tileY}: ${@patrolArea}"
 				@patrolArea = null
 			}else{
 				return
@@ -105,7 +173,7 @@ Monster = extends Entity {
 				}
 			}
 		}
-		// print "create patrol area:${@classname}#${@__id}:${@name}, tile: ${@tileX}, ${@tileY}: ${@patrolArea}"
+		print "create patrol area:${@classname}#${@__id}:${@name}, tile: ${@tileX}, ${@tileY}: ${@patrolArea}"
 	},
 	
 	// debugCheckMoveDir = true,
@@ -214,6 +282,16 @@ Monster = extends Entity {
 	
 	update = function(){
 		super()
+		if(@healthRecoveryTime <= @game.time){
+			var recoverySpeed = @healthValue / (30 * @attackLevel)
+			@damageValue = @damageValue - recoverySpeed * @game.dt
+			if(@damageValue <= 0){
+				@damageValue = 0
+				@hudStamina.visible = false
+				@healthRecoveryTime = null
+			}
+			@hudStamina.value = 1 - @damageValue / @healthValue
+		}
 		if(!@moving && @aiNextTime <= @game.time && !@moveTimeoutHandle){
 			@patrolArea || @createPatrolAreaIfNecessary()
 			if(@game.time - @aiQueryTime < 0.5){
@@ -233,6 +311,7 @@ Monster = extends Entity {
 						@moveTimeoutHandle = @addTimeout(0.65, setMoveDir)
 					})
 				}else{
+					@startBreathing()
 					setMoveDir()
 				}
 			}else{

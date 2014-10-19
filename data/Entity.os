@@ -64,36 +64,90 @@ Entity = extends Actor {
 		// moveStarted = false,
 		// moveFinishedCallback = null,
 		
-		fly = false
+		fly = false,
+	},
+	
+	getState = function(){
+		return {
+			tileX = @tileX,
+			tileY = @tileY,
+		}
+	},
+	
+	loadState = function(state){
+		// @game.unsetEntTile(this)
+		@game.initEntTile(this, state.tileX, state.tileY)
 	},
 	
 	__construct = function(game, type){
 		super()
+		@cull = true
 		@game = game
 		@type = type
+		@typeName = null
 		@name = game.getResName("ent", type)
 		@fly = ENTITIES_INFO[type].fly
+		@attackValue = ENTITIES_INFO[type].attack || 25
+		@healthValue = ENTITIES_INFO[type].health || @attackValue
+		@damageValue = 0
+		
+		@touchChildrenEnabled = false
+		@pivot = vec2(0.5, 0.5)
+		@size = vec2(TILE_SIZE, TILE_SIZE)
+		// @centerPos = vec2(0, 0) // @size / 2
+		// @childrenRelative = false
+		@centerPos = @size / 2
+		
+		@moveLayer = Actor().attrs {
+			pivot = vec2(0.5, 0.5),
+			pos = @centerPos,
+			size = @size,
+			childrenRelative = false,
+			parent = this,
+		}
+		@flipLayer = Actor().attrs {
+			pivot = vec2(0.5, 0.5),
+			size = @size,
+			childrenRelative = false,
+			parent = @moveLayer,
+		}
 		@sprite = Sprite().attrs {
 			resAnim = res.get(@name),
 			pivot = vec2(0.5, 0.5),
-			scale = @idealScale = 0.9,
-			parent = this,
+			// pos = @centerPos,
+			// childrenRelative = false,
+			// scale = @idealScale = 0.9,
+			parent = @flipLayer,
 		}
-		@pivot = vec2(0.5, 0.5)
-		@size = @sprite.size 
-		@sprite.pos = @idealPos = @size/2
-		@touchChildrenEnabled = false
-		// @breathing()
+		
+		@flipX = @flipY = 1
+		
+		@baseScale = @size / @sprite.size
+		@flipLayer.scale = @baseScale
+		
+		@sprite.scale = 0.9
 		
 		@addUpdate(@update.bind(this))
 		@addUpdate(0.1, @checkFalling.bind(this))
 	},
 	
+	/* __get@attackValue = function(){
+		return @_attackValue // (ENTITIES_INFO[@type].attack || 25) * (@tileY)
+	}, */
+	
+	__get@attackLevel = function(){
+		return math.max(0, math.floor(math.log(@attackValue / 25, 2)))
+	},
+	
+	__get@attackCurValue = function(){
+		return @attackValue * math.random(0.9, 1.1)
+	},
+	
 	centerSprite = function(){
-		@sprite.replaceTweenAction {
-			name = "sprite",
+		@attacking || @moveLayer.replaceTweenAction {
+			name = "move",
 			duration = 0.1,
-			pos = @idealPos,
+			pos = @centerPos,
 			angle = 0,
 		}
 	},
@@ -102,12 +156,23 @@ Entity = extends Actor {
 	
 	},
 	
-	setViewSide = function(newScaleX){
-		if(newScaleX != @scaleX){
-			@replaceTweenAction {
+	setSideFlip = function(newScaleX){
+		if(newScaleX != @flipX){
+			@flipLayer.replaceTweenAction {
 				name = "scaleX",
 				duration = 0.15 * @moveSpeed,
-				scaleX = newScaleX,
+				scaleX = (@flipX = newScaleX) * @baseScale.x,
+				ease = Ease.CUBIC_IN_OUT,
+			}
+		}
+	},
+	
+	setUpFlip = function(newScaleY){
+		if(newScaleY != @flipY){
+			@flipLayer.replaceTweenAction {
+				name = "scaleY",
+				duration = 0.3 * @moveSpeed,
+				scaleY = (@flipY = newScaleY) * @baseScale.y,
 				ease = Ease.CUBIC_IN_OUT,
 			}
 		}
@@ -116,7 +181,7 @@ Entity = extends Actor {
 	setTile = function(tx, ty){
 		@tileX == tx && @tileY == ty && return;
 		if(@tileX != tx){
-			@setViewSide(@tileX > tx ? 1 : -1)
+			@setSideFlip(@tileX > tx ? 1 : -1)
 		}
 		@game.setEntTile(this, tx, ty)
 		
@@ -160,10 +225,13 @@ Entity = extends Actor {
 	pushByEnt = function(ent, dx, dy){
 		if(!@moving && !@pushingByEnt){
 			if(ent.isPlayer != @isPlayer && (ent is NPC == false && this is NPC == false)){
-				@addTimeout(0.05, function(){ 
+				print "push ${@classname} by ${ent.classname}"
+				@addTimeout(0.05, function(){
+					print "try #1 attack ${@classname} by ${ent.classname}, ent.attacking: ${!!ent.attacking}"
 					!ent.attacking && ent.attack(this, dx)
 				})
 				@addTimeout(0.15, function(){ 
+					print "try #2 attack ${ent.classname} by ${@classname}, @attacking: ${!!@attacking}"
 					!@attacking && @attack(ent, -dx) // , speed, doneCallback)
 				})
 				// return
@@ -279,6 +347,7 @@ Entity = extends Actor {
 					}
 					if(empty){
 						@setTile(tileX + dx, tileY - 1)
+						@playJumpSound()
 						// @onTileChanged()
 						var time = 0.3 * @moveSpeed
 						var pos = @game.tileToCenterPos(tileX + dx, tileY - 1)
@@ -359,6 +428,7 @@ Entity = extends Actor {
 						{
 							// print "jump move: ${tileX}, ${tileY - 1}"
 							@setTile(tileX, tileY - 1)
+							@playJumpSound()
 							// @onTileChanged()
 							var time = 0.3 * @moveSpeed
 							var pos = @game.tileToCenterPos(tileX, tileY - 1)
@@ -367,7 +437,10 @@ Entity = extends Actor {
 								duration = time * 1.5,
 								y = pos.y,
 								ease = Ease.BACK_IN_OUT,
-								doneCallback = function(){ @moveAnimatedY = false },
+								doneCallback = function(){ 
+									@moveAnimatedY = false
+									@blockFalling(true)
+								},
 							}
 							return
 						}
@@ -390,11 +463,15 @@ Entity = extends Actor {
 		curTileY == @tileY && @_checkFalling()
 	},
 	
+	blockFalling = function(afterJump){
+	},
+	
 	_checkFalling = function(){
 		var tileX, tileY = @tileX, @tileY
 		if((!@fly || @isDead) && !@moveAnimatedY
 			&& @isTileEmptyToFall(tileX, tileY + 1)
-			&& @getAutoFrontType(tileX, tileY) != TILE_TYPE_LADDERS)
+			&& @getAutoFrontType(tileX, tileY) != TILE_TYPE_LADDERS
+			&& !@blockFalling())
 		{
 			// print "falling move: ${tileX}, ${tileY + 1}"
 			@setTile(tileX, tileY + 1)
@@ -452,22 +529,39 @@ Entity = extends Actor {
 		@update()
 	},
 	
+	playJumpSound = function(){
+	},
+	
 	playDeathSound = function(){
 	},
 	
-	die = function(doneCallback){
+	die = function(){
+		@isDead && return;
 		@stopBreathing()
 		@isPlayer = false
 		@isDead = true
+		@setUpFlip(-1)
 		@sprite.addTweenAction {
-			duration = 2,
-			angle = math.random(-100, 100), // 360 * 10,
-			scale = 0.5,
-			opacity = 0,
+			duration = 1.0,
 			color = Color(0.5, 0, 0),
-			ease = Ease.CUBIC_IN,
+		}
+		@sprite.addTweenAction {
+			duration = 3.0,
+			// angle = math.random(-100, 100), // 360 * 10,
+			// scale = 0.5,
+			// scaleY = -0.9,
+			opacity = 0.2,
+			// ease = Ease.CUBIC_IN_OUT,
 			doneCallback = function(){
-				@addTimeout(1, doneCallback)
+				// @addTimeout(1.0, function(){
+					@game.unsetEntTile(this)
+					@game.cleanupActor(this)
+					@detach()
+					if(this is Player){
+						@game.playerDead()
+					}
+					// doneCallback()
+				// })
 			},
 		}
 		@playDeathSound()
@@ -476,9 +570,10 @@ Entity = extends Actor {
 	stopBreathing = function(){
 		if(@breathingAction){
 			@centerSprite()
-			@sprite.removeActionsByName("breathing")
+			@sprite.removeActionsByName("scale")
+			@sprite.scale = 0.9
 			/* @sprite.replaceTweenAction {
-				name = "breathing",
+				name = "scale",
 				duration = 0.1,
 				scale = 0.9,
 			} */
@@ -505,7 +600,7 @@ Entity = extends Actor {
 					ease = Ease.CIRC_IN_OUT,
 				},
 			)
-			action.name = "breathing"
+			action.name = "scale"
 			action.doneCallback = anim
 			@sprite.replaceAction(action)
 			@breathingAction = action
@@ -513,43 +608,44 @@ Entity = extends Actor {
 		anim()
 	},
 	
-	useStamina = function(){
+	damage = function(value, attacker){
 	},
 	
 	attack = function(enemy, side, speed, doneCallback){
-		@isDead && return;
-		enemy.useStamina(60 * math.random(0.9, 1.1))
-		@stopBreathing()
-		@setViewSide(side < 0 ? 1 : -1)
-		// print "attack:${@classname}#${@__id}, side: ${side}"
-		@scaleX < 0 && side = -side
-		// @centerSprite()
-		// @sprite.pos = @idealPos
+		@isDead || @attacking && return;
+		enemy.damage(@attackCurValue, this)
+		// @stopBreathing()
 		if(functionOf(side)){
 			side, speed, callback = null, null, side
 		}else if(functionOf(speed)){
 			speed, callback = null, speed
 		}
+		@setSideFlip(side < 0 ? 1 : -1)
+		print "attack:${@classname}#${@__id}, side: ${side}"
+		// @scaleX < 0 && side = -side
+		// @centerSprite()
+		// @sprite.pos = @idealPos
 		speed && @attackSpeed = speed
-		var destPos = @idealPos + vec2(TILE_SIZE * 0.3 * (side || 1), 0)
-		@attacking = @sprite.replaceTweenAction {
-			name = "attack",
+		var destPos = @centerPos + vec2(TILE_SIZE * 0.3 * (side || 1), 0)
+		@attacking = @moveLayer.replaceTweenAction {
+			name = "move",
 			duration = 0.02 * math.random(0.9, 1.1) / @attackSpeed,
-			scale = @idealScale,
+			// scale = @idealScale,
 			pos = destPos,
-			angle = math.random(-15, 15),
+			angle = randItem([-15, 0, 15]), // math.random(-15, 15),
 			ease = Ease.QUINT_IN,
 			doneCallback = function(){
 				// print "attack mid, attackCallback: ${@attackCallback}"
-				@attacking = @sprite.replaceTweenAction {
-					name = "attack",
+				@attacking = @moveLayer.replaceTweenAction {
+					name = "move",
 					duration = 0.2 * math.random(0.9, 1.1) / @attackSpeed,
-					pos = @idealPos,
+					pos = @centerPos,
 					angle = 0,
 					ease = Ease.CIRC_IN_OUT,
 					doneCallback = function(){
+						print "attack finished for ${@classname}#${@__id}"
 						@attacking = null
-						@startBreathing()
+						// @startBreathing()
 						doneCallback()
 					}
 				}
