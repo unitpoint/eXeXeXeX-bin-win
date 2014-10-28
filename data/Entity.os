@@ -55,6 +55,8 @@ Entity = extends Actor {
 		moveAnimatedX = false,
 		moveAnimatedY = false,
 		moving = false,
+		movingX = false,
+		movingY = false,
 		attacking = false,
 		isMoveStarted = false,
 		pushingByEnt = null,
@@ -63,8 +65,12 @@ Entity = extends Actor {
 		prevMoveDir = vec2(0, 0),
 		// moveStarted = false,
 		// moveFinishedCallback = null,
+		waddleEnabled = true,
 		
 		fly = false,
+		attackValue = 0,
+		healthValue = 0,
+		damageValue = 0,
 	},
 	
 	getState = function(){
@@ -79,17 +85,23 @@ Entity = extends Actor {
 		@game.initEntTile(this, state.tileX, state.tileY)
 	},
 	
-	__construct = function(game, type){
+	initObject = function(levelObj){
+		@game.initEntTile(this, levelObj.x, levelObj.y)
+	},
+	
+	__construct = function(game, type, group){
 		super()
 		@cull = true
 		@game = game
 		@type = type
-		@typeName = null
-		@name = game.getResName("ent", type)
-		@fly = ENTITIES_INFO[type].fly
-		@attackValue = ENTITIES_INFO[type].attack || 25
-		@healthValue = ENTITIES_INFO[type].health || @attackValue
-		@damageValue = 0
+		group || group = "ent"
+		@name = game.getResName(group, type)
+		if(group == "ent"){
+			@fly = ENTITIES_INFO[type].fly
+			@attackValue = ENTITIES_INFO[type].attack || 25
+			@healthValue = ENTITIES_INFO[type].health || @attackValue
+			@damageValue = 0
+		}
 		
 		@touchChildrenEnabled = false
 		@pivot = vec2(0.5, 0.5)
@@ -143,6 +155,9 @@ Entity = extends Actor {
 		return @attackValue * math.random(0.9, 1.1)
 	},
 	
+	queryAI = function(){
+	},
+	
 	centerSprite = function(){
 		@attacking || @moveLayer.replaceTweenAction {
 			name = "move",
@@ -150,6 +165,10 @@ Entity = extends Actor {
 			pos = @centerPos,
 			angle = 0,
 		}
+	},
+	
+	onClick = function(ev){
+	
 	},
 	
 	onTilePosChanged = function(){
@@ -224,14 +243,17 @@ Entity = extends Actor {
 	
 	pushByEnt = function(ent, dx, dy){
 		if(!@moving && !@pushingByEnt){
-			if(ent.isPlayer != @isPlayer && (ent is NPC == false && this is NPC == false)){
-				print "push ${@classname} by ${ent.classname}"
+			if(ent.isPlayer != @isPlayer 
+				&& (ent is NPC == false && this is NPC == false) 
+				&& (ent is EntItem == false && this is EntItem == false))
+			{
+				// print "push ${@classname} by ${ent.classname}"
 				@addTimeout(0.05, function(){
-					print "try #1 attack ${@classname} by ${ent.classname}, ent.attacking: ${!!ent.attacking}"
+					// print "try #1 attack ${@classname} by ${ent.classname}, ent.attacking: ${!!ent.attacking}"
 					!ent.attacking && ent.attack(this, dx)
 				})
 				@addTimeout(0.15, function(){ 
-					print "try #2 attack ${ent.classname} by ${@classname}, @attacking: ${!!@attacking}"
+					// print "try #2 attack ${ent.classname} by ${@classname}, @attacking: ${!!@attacking}"
 					!@attacking && @attack(ent, -dx) // , speed, doneCallback)
 				})
 				// return
@@ -245,21 +267,23 @@ Entity = extends Actor {
 	},
 	
 	onMoveStarted = function(){
-		var side = @prevTileX < @tileX ? 1 : -1
-		var action = RepeatForeverAction(SequenceAction(
-			TweenAction {
-				duration = 0.15 * @moveSpeed,
-				angle = -5 * side,
-				// ease = Ease.CUBIC_IN_OUT,
-			},
-			TweenAction {
-				duration = 0.15 * @moveSpeed,
-				angle = 5 * side,
-				// ease = Ease.CUBIC_IN_OUT,
-			},
-		))
-		action.name = "moveAngle"
-		@replaceAction(action)
+		if(@waddleEnabled){
+			var side = @prevTileX < @tileX ? 1 : -1
+			var action = RepeatForeverAction(SequenceAction(
+				TweenAction {
+					duration = 0.15 * @moveSpeed,
+					angle = -5 * side,
+					// ease = Ease.CUBIC_IN_OUT,
+				},
+				TweenAction {
+					duration = 0.15 * @moveSpeed,
+					angle = 5 * side,
+					// ease = Ease.CUBIC_IN_OUT,
+				},
+			))
+			action.name = "moveAngle"
+			@replaceAction(action)
+		}
 	},
 	
 	onMoveFinished = function(){
@@ -336,6 +360,7 @@ Entity = extends Actor {
 			} */
 			do{ if(!@moveAnimatedX && dx != 0){
 				var sideJump = function(){
+					// @isPlayer && return; // (dy >= 0 || @movingY || @movingX) && return;
 					var empty = @isTileEmptyToMove(tileX + dx, tileY - 1)
 					if(!empty){
 						var ent = @getTileEnt(tileX + dx, tileY - 1)
@@ -347,6 +372,8 @@ Entity = extends Actor {
 					}
 					if(empty){
 						@setTile(tileX + dx, tileY - 1)
+						// tileX, tileY = @tileX, @tileY
+						// tileX = @tileX
 						@playJumpSound()
 						// @onTileChanged()
 						var time = 0.3 * @moveSpeed
@@ -371,8 +398,9 @@ Entity = extends Actor {
 				}
 				
 				if(@isTileEmptyToMove(tileX + dx, tileY)){
-					// print "side move: ${tileX + dx}, ${tileY}"
+					// @isPlayer && print("try side move: ${tileX + dx}, ${tileY}, dy: ${dy}")
 					if(dy < 0 
+						&& (!@isPlayer || (!@movingX && !@movingY) || @game.getFrontType(tileX, tileY) == TILE_TYPE_LADDERS)
 						// && @isTileEmptyToMove(tileX, tileY) // == TILE_TYPE_LADDERS
 						&& (@getAutoFrontType(tileX, tileY) == TILE_TYPE_LADDERS
 							|| @getAutoFrontType(tileX, tileY + 1) != TILE_TYPE_EMPTY)
@@ -381,7 +409,11 @@ Entity = extends Actor {
 					{
 						return
 					}
+					// @isPlayer && print("real side move: ${tileX + dx}, ${tileY}, dy: ${dy}")
 					@setTile(tileX + dx, tileY)
+					// tileX, tileY = @tileX, @tileY
+					// tileX = @tileX
+					// @isPlayer && print("after side move: ${@tileX}, ${@tileY}, dy: ${dy}")
 					// @onTileChanged()
 					break
 				}
@@ -389,10 +421,15 @@ Entity = extends Actor {
 				if(ent.pushByEnt(this, dx, 0) && @isTileEmptyToMove(tileX + dx, tileY)){
 					// print "push & side move: ${tileX + dx}, ${tileY}"
 					@setTile(tileX + dx, tileY)
+					// tileX = @tileX
+					// tileX, tileY = @tileX, @tileY
 					// @onTileChanged()
 					break
 				}
-				if(dy < 1 && (@fly 
+				if(dy < 1 
+					&& !@isPlayer
+					// && (!@isPlayer || (!@movingX && !@movingY))
+					&& (@fly 
 						|| @getAutoFrontType(tileX, tileY) == TILE_TYPE_LADDERS
 						|| @getAutoFrontType(tileX, tileY + 1) != TILE_TYPE_EMPTY 
 						|| @getTileEnt(tileX, tileY + 1))
@@ -408,6 +445,9 @@ Entity = extends Actor {
 			if(!@moveAnimatedY && dy != 0){
 				if(tileX != curTileX && dy < 0 && !@fly && (this is Monster)){
 					// print "tileX is changed, skip jump"
+					break
+				}
+				if(@isPlayer && dy < 0 && @movingY){
 					break
 				}
 				var empty = @isTileEmptyToMove(tileX, tileY + dy)
@@ -428,6 +468,7 @@ Entity = extends Actor {
 						{
 							// print "jump move: ${tileX}, ${tileY - 1}"
 							@setTile(tileX, tileY - 1)
+							// tileX, tileY = @tileX, @tileY
 							@playJumpSound()
 							// @onTileChanged()
 							var time = 0.3 * @moveSpeed
@@ -452,6 +493,7 @@ Entity = extends Actor {
 					}
 					// print "vert move: ${tileX}, ${tileY + dy}"
 					@setTile(tileX, tileY + dy)
+					// tileX, tileY = @tileX, @tileY
 					// @onTileChanged()
 					break
 				}
@@ -467,7 +509,9 @@ Entity = extends Actor {
 	},
 	
 	_checkFalling = function(){
-		var tileX, tileY = @tileX, @tileY
+		var tileX, tileY = @game.posToTile(@pos)
+		math.abs(tileX - @tileX) <= 1 && math.abs(tileY - @tileY) <= 1 || return;
+		var tileX, tileY = @tileX, math.min(tileY, @tileY)
 		if((!@fly || @isDead) && !@moveAnimatedY
 			&& @isTileEmptyToFall(tileX, tileY + 1)
 			&& @getAutoFrontType(tileX, tileY) != TILE_TYPE_LADDERS
@@ -488,30 +532,63 @@ Entity = extends Actor {
 			}
 			var dest = @game.tileToCenterPos(@tileX, @tileY)
 			var offs = dest - @pos
-			var len = #offs
-			if(len > 0){
-				var speed = TILE_SIZE / (0.3 * @moveSpeed)
-				var moveOffs = speed * @game.dt
-				if(moveOffs >= len){
-					// prevent float number accuracy
-					if(!@moveAnimatedX){
+			
+			var speed = TILE_SIZE / (0.3 * @moveSpeed)
+			var moveOffs = speed * @game.dt
+			
+			var experimentalWay = true
+			if(experimentalWay){
+				if(!@moveAnimatedX){
+					var lenX = math.abs(offs.x)
+					if(lenX > 0 && moveOffs < lenX){
+						@x += offs.x * moveOffs / lenX
+						// moveOffs *= 0.75
+					}else{
+						// prevent float number accuracy
 						@x = dest.x
 					}
-					if(!@moveAnimatedY){
+				}
+				if(!@moveAnimatedY){
+					var lenY = math.abs(offs.y)
+					if(lenY > 0 && moveOffs < lenY){
+						@y += offs.y * moveOffs / lenY
+					}else{
+						// prevent float number accuracy
 						@y = dest.y
 					}
-				}else{
-					var offsScale = moveOffs / len
-					if(!@moveAnimatedX){
-						@x += offs.x * offsScale
-					}
-					if(!@moveAnimatedY){
-						@y += offs.y * offsScale
+				}
+			}else{
+				var len = #offs
+				if(len > 0){
+					if(moveOffs >= len){
+						// prevent float number accuracy
+						if(!@moveAnimatedX){
+							@x = dest.x
+						}
+						if(!@moveAnimatedY){
+							@y = dest.y
+						}
+					}else{
+						var offsScale = moveOffs / len
+						if(!@moveAnimatedX){
+							@x += offs.x * offsScale
+						}
+						if(!@moveAnimatedY){
+							@y += offs.y * offsScale
+							var maxOffs = TILE_SIZE / 128
+							if(math.abs(@y - dest.y) < maxOffs){
+								@y = dest.y
+							}
+						}
 					}
 				}
 			}
+			// var maxOffs = TILE_SIZE / 128
+			@movingX = @x != dest.x
+			@movingY = @y != dest.y
+			// @movingY = math.abs(@y - dest.y) < maxOffs
 			if(!@moveAnimatedX && !@moveAnimatedY){
-				if(@x == dest.x && @y == dest.y){
+				if(!@movingX && !@movingY){
 					@moving = false
 					@isMoveStarted = false
 					@onMoveFinished()
@@ -520,6 +597,8 @@ Entity = extends Actor {
 						@pickTileX = @pickTileY = null
 					}
 				}
+			}else{
+				// @movingX = @movingY = true
 			}
 		}
 	},

@@ -102,7 +102,6 @@ Player = extends Entity {
 	},
 	__construct = function(game, name){
 		super(game, name)
-		@typeName = "player"
 		@parent = game.layers[LAYER_PLAYER]
 		@isPlayer = true
 		// @_stamina = 0; @stamina = game.playerMaxStamina // update stamina bar
@@ -488,6 +487,8 @@ Player = extends Entity {
 		super()
 		
 		@light.pos = @pos + vec2(math.random(-0.02, 0.02) * TILE_SIZE, math.random(-0.02, 0.02) * TILE_SIZE)
-		@light.radius = @lightTileRadius * @lightTileRadiusScale * TILE_SIZE * math.random(0.97, 1.03)
+		@light.radius = @lightTileRadius * @lightTileRadiusScale * TILE_SIZE * math.random(0.98, 1.02)
+		
+		@game.playerTargetTile.pos = @game.tileToCenterPos(@tileX, @tileY)
 	},
 }
