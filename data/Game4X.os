@@ -31,88 +31,20 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ******************************************************************************/
 
-var enumCount = 0
-LAYER_TILES = enumCount++
-LAYER_DECALS = enumCount++
-LAYER_MONSTERS = enumCount++
-LAYER_PLAYER = enumCount++
-LAYER_FALLING_TILES = enumCount++
-LAYER_EXPLODES = enumCount++
-LAYER_DEBUG = enumCount++
-LAYER_COUNT = enumCount
+require "consts"
 
+/*
 TILE_FADE_SIZE = 32
 
-TILE_TYPE_EMPTY = 0
+ELEM_TYPE_EMPTY = 0
 ITEM_TYPE_EMPTY = 0
 
 TILE_TYPE_GRASS = 1
 TILE_TYPE_CHERNOZEM = 8
 TILE_TYPE_ROCK = 9
 TILE_TYPE_DOOR_01 = 16
-TILE_TYPE_LADDERS = 17
+TILE_TYPE_LADDER = 17
 TILE_TYPE_TRADE_STOCK = 24
-
-TILE_PRIORITY_BASE = 2
-TILE_PRIORITY_DOOR = 3
-TILE_PRIORITY_FALLING = 4
-
-var enumCount = 0
-GAME_PRIORITY_BG = enumCount++
-GAME_PRIORITY_VIEW = enumCount++
-GAME_PRIORITY_LIGHTMASK = enumCount++
-GAME_PRIORITY_GLOWING = enumCount++
-GAME_PRIORITY_BUBBLES = enumCount++
-GAME_PRIORITY_DEBUG = enumCount++
-GAME_PRIORITY_HUD = enumCount++
-GAME_PRIORITY_DRAGNDROP = enumCount++
-GAME_PRIORITY_MODALVIEW = enumCount++
-GAME_PRIORITY_BLOOD = enumCount++
-GAME_PRIORITY_FADEIN = enumCount++
-
-HUD_ICON_SIZE = 80
-HUD_ICON_INDENT = 10
-
-// HUD_SLOT_SIZE = 80
-// HUD_SLOT_INDENT = 5
-
-SLOT_SIZE = 80
-SLOT_INDENT = 5
-
-TILES_INFO = {
-	[TILE_TYPE_GRASS] = {
-		strength = 3,
-	},
-	[TILE_TYPE_CHERNOZEM] = {
-		variants = 3,
-		strength = 6,
-		// damageDelay = 0.1,
-	},
-	[TILE_TYPE_ROCK] = {
-		// variants = 1,
-	},
-	/* [TILE_TYPE_LADDERS] = {
-		strength = 0,
-	}, */
-	2 = {
-		strength = 50,
-		variants = 2,
-		glowing = true,
-	},
-	3 = {
-		strength = 30,
-		glowing = true,
-	},
-	[TILE_TYPE_DOOR_01] = {
-		class = "Door",
-		// door = true,
-		handle = "door-handle",
-		handleShadow = "door-handle-shadow",
-	},
-	[TILE_TYPE_TRADE_STOCK] = {
-		variants = 4,
-	},
-}
 
 ITEM_TYPE_COAL = 7
 ITEM_TYPE_GOLD = 10
@@ -121,7 +53,7 @@ ITEM_TYPE_PICK_01 = 17
 ITEM_TYPE_PICK_02 = 18
 ITEM_TYPE_PICK_03 = 19
 ITEM_TYPE_BULLETS = 21
-ITEM_TYPE_LADDERS = 23
+ITEM_TYPE_LADDER = 23
 ITEM_TYPE_STAMINA = 24
 ITEM_TYPE_FOOD_01 = 25
 ITEM_TYPE_FOOD_02 = 26
@@ -132,194 +64,37 @@ ITEM_TYPE_BOMB_03 = 34
 ITEM_TYPE_BOMB_04 = 35
 ITEM_TYPE_STAND_FLAME_01 = 40
 ITEM_TYPE_ENT_SAFEPACK = 41
+ITEM_TYPE_TILE_DIRT_01 = 48
 
 // not real items
 ITEM_TYPE_SHOPPING = 1000
+*/
 
-ITEMS_INFO = {
-	1 = {
-		hasTileSprite = true,
-		strengthScale = 1.1,
-		price = 50,
-		canBuy = false,
-		glowing = true,
-	},
-	2 = {
-		hasTileSprite = true,
-		strengthScale = 1.15,
-		price = 75,
-		canBuy = false,
-		glowing = true,
-	},
-	3 = {
-		hasTileSprite = true,
-		strengthScale = 1.2,
-		price = 85,
-		canBuy = false,
-		glowing = true,
-	},
-	4 = {
-		hasTileSprite = true,
-		strengthScale = 1.1,
-		price = 60,
-		canBuy = false,
-		glowing = true,
-	},
-	5 = {
-		hasTileSprite = true,
-		strengthScale = 1.1,
-		price = 95,
-		canBuy = false,
-		glowing = true,
-	},
-	6 = {
-		hasTileSprite = true,
-		strengthScale = 1.1,
-		price = 155,
-		canBuy = false,
-		glowing = true,
-	},
-	[ITEM_TYPE_COAL] = {
-		hasTileSprite = true,
-		strengthScale = 1.5,
-		price = 35,
-		canBuy = false,
-		glowing = true,
-	},
-	8 = {
-		hasTileSprite = true,
-		strengthScale = 1.1,
-		price = 45,
-		canBuy = false,
-		glowing = true,
-	},
-	9 = {
-		hasTileSprite = true,
-		strengthScale = 1.5,
-		price = 190,
-		canBuy = false,
-		glowing = true,
-	},
-	[ITEM_TYPE_GOLD] = {
-		hasTileSprite = true,
-		variants = 2,
-		strengthScale = 2,
-		price = 100,
-		canBuy = false,
-		glowing = true,
-	},
-	[ITEM_TYPE_SHOVEL] = {
-		strengthScale = 1.1,
-		price = 100,
-		pickDamage = 1,
-	},
-	[ITEM_TYPE_PICK_01] = {
-		strengthScale = 2,
-		price = 1500,
-		pickDamage = 3,
-	},
-	[ITEM_TYPE_PICK_02] = {
-		strengthScale = 4,
-		price = 5000,
-		pickDamage = 6,
-	},
-	[ITEM_TYPE_PICK_03] = {
-		strengthScale = 6,
-		price = 10000,
-		pickDamage = 12,
-	},
-	[ITEM_TYPE_BULLETS] = {
-		strengthScale = 1.1,
-		price = 1,
-		canBuy = false,
-	},
-	[ITEM_TYPE_LADDERS] = {
-		strengthScale = 1.1,
-		price = 20,
-		// useDistance = 1,
-	},
-	[ITEM_TYPE_STAMINA] = {
-		addMaxStamina = 25,
-		strengthScale = 4,
-		price = 1000,
-		useSounds = ["max-stamina"],
-	},
-	[ITEM_TYPE_FOOD_01] = {
-		strengthScale = 1.1,
-		stamina = 25,
-		price = 25,
-		useSounds = ["item-04"],
-	},
-	[ITEM_TYPE_FOOD_02] = {
-		strengthScale = 1.2,
-		stamina = 100,
-		price = 100,
-		useSounds = ["item-04"],
-	},
-	[ITEM_TYPE_FOOD_03] = {
-		strengthScale = 1.3,
-		stamina = 200,
-		price = 150,
-		useSounds = ["item-04"],
-	},
-	[ITEM_TYPE_BOMB_01] = {
-		strengthScale = 1.5,
-		price = 100,
-		bomb = true,
-		explodeRadius = 1.0,
-		explodeWait = 3.0,
-		damage = 200,
-		useDistance = 1,
-		useSounds = ["grenade-bounce-01", "grenade-bounce-02"],
-	},
-	[ITEM_TYPE_BOMB_02] = {
-		strengthScale = 1.5,
-		price = 200,
-		bomb = true,
-		explodeRadius = 1.5,
-		explodeWait = 3.0,
-		damage = 500,
-		useDistance = 2,
-		useSounds = ["grenade-bounce-01", "grenade-bounce-02"],
-	},
-	[ITEM_TYPE_BOMB_03] = {
-		strengthScale = 2.0,
-		price = 300,
-		bomb = true,
-		explodeRadius = 2.0,
-		explodeWait = 3.0,
-		damage = 1500,
-		useDistance = 3,
-		useSounds = ["grenade-bounce-01", "grenade-bounce-02"],
-	},
-	[ITEM_TYPE_BOMB_04] = {
-		strengthScale = 2.5,
-		price = 500,
-		bomb = true,
-		explodeRadius = 2.9,
-		explodeWait = 3.0,
-		damage = 5000,
-		useDistance = 3,
-		useSounds = ["grenade-bounce-01", "grenade-bounce-02"],
-	},
-	[ITEM_TYPE_STAND_FLAME_01] = {
-		strengthScale = 2.0,
-		price = 300,
-		canBuy = false,
-		// useDistance = 3,
-	},
-	/*
-	301 = {
-		staminaScale = 1.1,
-		price = 100,
-	},
-	[ITEM_TYPE_WEAPON_01] = {
-		strengthScale = 1.5,
-		meleeAttack = 20,
-		price = 200,
-	},
-	*/
-}
+/*
+TILE_PRIORITY_BASE = 2
+TILE_PRIORITY_DOOR = 3
+TILE_PRIORITY_FALLING = 4
+
+var enumCount = 0
+LAYER_TILES = enumCount++
+LAYER_DECALS = enumCount++
+LAYER_MONSTERS = enumCount++
+LAYER_PLAYER = enumCount++
+LAYER_FALLING_TILES = enumCount++
+LAYER_EXPLODES = enumCount++
+LAYER_DEBUG = enumCount++
+LAYER_COUNT = enumCount
+*/
+
+/*
+HUD_ICON_SIZE = 80
+HUD_ICON_INDENT = 10
+
+// HUD_SLOT_SIZE = 80
+// HUD_SLOT_INDENT = 5
+
+SLOT_SIZE = 80
+SLOT_INDENT = 5
 
 SHOP_ITEMS_INFO = {}
 PICK_DAMAGE_ITEMS_INFO = {}
@@ -327,7 +102,7 @@ BOMB_ITEMS_INFO = {}
 // LADDERS_ITEMS_INFO = {}
 
 @{
-	// LADDERS_ITEMS_INFO[ITEM_TYPE_LADDERS] = ITEMS_INFO[ITEM_TYPE_LADDERS]
+	// LADDERS_ITEMS_INFO[ITEM_TYPE_LADDER] = ITEMS_INFO[ITEM_TYPE_LADDER]
 	
 	for(var type, item in ITEMS_INFO){
 		if(item.canBuy !== false){
@@ -470,24 +245,27 @@ ENTITIES_INFO = {
 		// trader = true,
 	},
 }
+*/
 
 Game4X = extends BaseGame4X {
 	__object = {
 		time = 0,
 		dt = 0,
+		/*
+		frontTiles = {},
+		backTiles = {},
+		itemTiles = {},
+		shadowTiles = {},
+		tiles = {},
+		*/
 		tiles = {},
 		tileEnt = {},
 		tileCracks = {},
-		oldViewTilePosX = -1,
-		oldViewTilePosY = -1,
 		player = null,
 		// playerMaxStamina = 300,
 		// playerStamina = 0,
 		// npcList = {},
-		lightMask = null,
 		following = null,
-		followTileX = -1,
-		followTileY = -1,
 	},
 	
 	__construct = function(saveSlotNum){
@@ -500,6 +278,7 @@ Game4X = extends BaseGame4X {
 		
 		// @shakeOffs = vec2(0, 0)
 		@shakeUpdateHandle = null
+		@shakeOffs = null
 		
 		@blockSound = null
 		@blockSoundTime = 0
@@ -516,80 +295,99 @@ Game4X = extends BaseGame4X {
 			resAnim = res.get("bg-start"),
 			pivot = vec2(0.5, 0),
 			pos = vec2(@width/2, 0),
-			priority = GAME_PRIORITY_BG,
+			priority = GAME_LAYER_BG,
+			touchEnabled = false,
+			touchChildrenEnabled = false,
 			parent = this,
 		}
 		@bg.scale = @width / @bg.width
 		
-		@glowingTiles = Actor().attrs {
-			priority = GAME_PRIORITY_GLOWING,
-			touchEnabled = false,
-			touchChildrenEnabled = false,
+		@map = Actor().attrs {
+			pivot = vec2(0, 0),
+			pos = vec2(0, 0),
+			scale = PLATFORM == "windows" ? 0.8 : 1.0,
+			priority = GAME_LAYER_MAP,			
+			clock = Clock(),
 			parent = this,
 		}
+		@initialMapScale = @map.scale
 		
-		@speechBubbles = Actor().attrs {
-			priority = GAME_PRIORITY_BUBBLES,
+		@mapLayers = []
+		for(var i = 0; i < MAP_LAYER_COUNT; i++){
+			@mapLayers[] = Actor().attrs {
+				priority = i,
+				parent = @map,
+			}
+		}
+		for(var _, i in MAP_LAYERS_TOUCH_DISABLED){
+			@mapLayers[i].attrs {
+				touchEnabled = false,
+				touchChildrenEnabled = false,
+			}
+		}
+		// @mapLayers[MAP_LAYER_SCREEN_LIGHTMAP].scale = vec2(1, 1) / @map.scale
+		
+		@lightmapLayer = @mapLayers[MAP_LAYER_SCREEN_LIGHTMAP]
+		@lightmap = BaseLightmap().attrs {
+			// size = @size / @map.scale,
+			// scale = vec2(1, 1) / @map.scale,
+			// priority = GAME_PRIORITY_LIGHTMASK,
+			// opacity = 0.2,
+			parent = @mapLayers[MAP_LAYER_SCREEN_LIGHTMAP],
+			// visible = false,
+		}
+		
+		/* @speechBubbles = Actor().attrs {
+			// priority = GAME_PRIORITY_BUBBLES,
 			touchEnabled = false,
 			// touchChildrenEnabled = false,
-			parent = this,
-		}
-		
-		@debugTiles = Actor().attrs {
-			priority = GAME_PRIORITY_DEBUG,
-			touchEnabled = false,
-			touchChildrenEnabled = false,
-			parent = this,
-		}
+			parent = @mapLayers[MAP_LAYER_BUBBLES],
+		} */
+		@speechBubbles = @mapLayers[MAP_LAYER_BUBBLES]
 		
 		@playerTargetTile = ColorRectSprite().attrs {
 			size = vec2(TILE_SIZE, TILE_SIZE),
 			pivot = vec2(0.5, 0.5),
 			color = Color.RED,
 			opacity = 0.2,
-			parent = DEBUG ? @debugTiles : null,
+			// parent = DEBUG ? @mapLayers[MAP_LAYER_DEBUG] : null,
+			// parent = @mapLayers[MAP_LAYER_DEBUG],
+			parent = null,
 		}
 		
-		// var game = this
-		@view = Actor().attrs {
-			pivot = vec2(0, 0),
-			pos = vec2(0, 0),
-			// scale = 0.7,
-			priority = GAME_PRIORITY_VIEW,			
-			clock = Clock(),
-			parent = this,
-		}
+		@physWorld = PhysWorld()
+		@physWorld.toPhysScale = 2 / 128 * 0.5
+		@physWorld.gravity = vec2(0, 20) / @physWorld.toPhysScale
+		@physDebugDraw = false // PLATFORM == "windows"
+		// @createPhysicsWorld()
 		
 		@dragndrop = DragndropItems(this).attrs {
-			priority = GAME_PRIORITY_DRAGNDROP,			
-			parent = this,
-		}
-		
-		@layers = []
-		for(var i = 0; i < LAYER_COUNT; i++){
-			@layers[] = Actor().attrs {
-				priority = i,
-				parent = @view,
-			}
-		}
-		
-		@lightLayer = BaseLightLayer().attrs {
-			size = @size,
-			priority = GAME_PRIORITY_LIGHTMASK,
+			priority = GAME_LAYER_DRAGNDROP,			
 			parent = this,
 		}
 		
 		@hud = Actor().attrs {
 			name = "hud",
 			size = @size,
-			priority = GAME_PRIORITY_HUD,
+			priority = GAME_LAYER_HUD,
 			parent = this,
 			touchEnabled = false,
+			visible = false, // debug
+		}
+		
+		@debugMessages = Actor().attrs {
+			name = "debugMessages",
+			size = @size,
+			priority = GAME_LAYER_DEBUG_MESSAGED,
+			parent = this,
+			touchEnabled = false,
+			touchChildrenEnabled = false,
 		}
 		
 		@modalView = ModalView().attrs {
 			name = "modalView",
 			size = @size,
+			// priority = GAME_LAYER_MODALVIEW,			
 			parent = @hud,
 			// touchEnabled = false,
 			visible = false,
@@ -655,6 +453,7 @@ Game4X = extends BaseGame4X {
 		@disableSaveLoad()
 		
 		@hudSlots = []
+		@selectedHudSlot = null
 		if(false){
 			var hudSlotX = @width - 2
 			for(var i = 0; i < 3; i++){
@@ -671,7 +470,7 @@ Game4X = extends BaseGame4X {
 			var hudSlotY = 2
 			// var str = _T("Use item")
 			for(var i = 0; i < 3; i++){
-				var hudSlot = HudSlot(this).attrs {
+				var hudSlot = HudSlot(this, #@hudSlots).attrs {
 					pivot = vec2(1, 0),
 					x = @width - 2,
 					y = hudSlotY,
@@ -695,6 +494,14 @@ Game4X = extends BaseGame4X {
 			var moveJoystickActivated = false
 			var keyboardEvent = function(ev){
 				var pressed = ev.type == KeyboardEvent.DOWN
+				if(!pressed && ev.scancode == KeyboardEvent.SCANCODE_P){
+					@physDebugDraw = !@physDebugDraw
+					return
+				}
+				if(!pressed && ev.scancode == KeyboardEvent.SCANCODE_L){
+					@lightmap.visible = !@lightmap.visible
+					return
+				}
 				if(ev.scancode == KeyboardEvent.SCANCODE_LEFT || ev.scancode == KeyboardEvent.SCANCODE_A){
 					@keyPressed.left = pressed
 				}
@@ -738,13 +545,38 @@ Game4X = extends BaseGame4X {
 			}
 			@keyEventDownId = stage.addEventListener(KeyboardEvent.DOWN, keyboardEvent)
 			@keyEventUpId = stage.addEventListener(KeyboardEvent.UP, keyboardEvent)
+			
+			@targetMapScale = @mapScale.x
+			var setMapScale = function(scale){
+				scale = math.round(scale / 0.1) * 0.1
+				scale = clamp(scale, 0.2, 1.5)
+				if(@targetMapScale != scale){
+					@targetMapScale = scale
+					@addDebugMessage("map scale: ${scale}")
+					// @mapScale = scale
+					@replaceTweenAction {
+						name = "mapScale",
+						duration = 0.5,
+						mapScale = scale,
+						ease = Ease.CUBIC_OUT,
+					}
+				}
+			}
+			
+			@addEventListener(TouchEvent.WHEEL_UP, function(ev){
+				setMapScale(@targetMapScale + 0.1)
+			})
+			@addEventListener(TouchEvent.WHEEL_DOWN, function(ev){
+				setMapScale(@targetMapScale - 0.1)
+			})
 		}
 
 		@addUpdate(@update.bind(this))
 		
 		@saveSlotNum && @addEventListener(TouchEvent.CLICK, function(ev){
-			if(ev.target is BaseTile){
-				@pickTile(ev.target.tileX, ev.target.tileY, true)
+			if(ev.target is BaseLayerTile){
+				var layerTile = ev.target
+				@pickTile(layerTile.tile.tileX, layerTile.tile.tileY, true)
 				return
 			}
 			if(ev.target is Entity){
@@ -770,30 +602,32 @@ Game4X = extends BaseGame4X {
 			// var touch = ev.localPosition
 		})
 		
-		@dragging = null
+		@draggingPos = null
+		@dragging = false
 		if(@saveSlotNum){
 			@addEventListener(TouchEvent.START, function(ev){
-				if(ev.target is BaseTile){
-					@dragging = ev.localPosition
+				if(ev.target is BaseLayerTile){
+					@draggingPos = ev.localPosition
+					@dragging = true
 				}
 			})
 			
 			@addEventListener(TouchEvent.MOVE, function(ev){
-				if(@dragging){
-					var offs = ev.localPosition - @dragging
-					@view.pos += offs
-					@glowingTiles.pos = @speechBubbles.pos = @debugTiles.pos = @view.pos
-					@dragging = ev.localPosition
+				if(@draggingPos){
+					var offs = ev.localPosition - @draggingPos
+					@mapPos += offs
+					// @glowingTiles.pos = @speechBubbles.pos = @debugTiles.pos = @view.pos
+					@draggingPos = ev.localPosition
 				}
 			})
 			
 			@addEventListener(TouchEvent.END, function(ev){
-				@dragging = null
+				@draggingPos = null
 			})
 		}
 		
 		@hudBlood = Actor().attrs {
-			priority = GAME_PRIORITY_BLOOD,
+			priority = GAME_LAYER_BLOOD,
 			touchEnabled = false,
 			touchChildrenEnabled = false,
 			parent = this,
@@ -848,7 +682,7 @@ Game4X = extends BaseGame4X {
 			@hud.visible = false
 			// @player.visible = false
 			@modalView.parent = this
-			@modalView.priority = GAME_PRIORITY_MODALVIEW
+			@modalView.priority = GAME_LAYER_MENU_MODALVIEW
 			@modalView.color = Color(0.2, 0.23, 0.23, 0),
 			@openLoadGame()
 			playMusic("music-menu")
@@ -858,14 +692,95 @@ Game4X = extends BaseGame4X {
 		ColorRectSprite().attrs {
 			size = @size,
 			color = Color.BLACK,
-			priority = GAME_PRIORITY_FADEIN,
+			priority = GAME_LAYER_FADE,
 			touchEnabled = false,
 			parent = this,
 		}.addTweenAction {
 			duration = 2.0,
 			opacity = 0,
 			detachTarget = true,
+			doneCallback = function(){
+				@addDebugMessage("game started")
+			},
 		}
+	},
+	
+	addDebugMessage = function(params){
+		if(params.prototype !== Object){
+			params = {message = params}
+		}
+		var reposMessages = function(time){
+			for(var i, messageField in @debugMessages){
+				if(time <= 0){
+					messageField.removeActionsByName("repos")
+					messageField.pos = messagePosForIndex(i)
+				}else{
+					messageField.replaceTweenAction {
+						name = "repos",
+						duration = time || 0.5,
+						pos = messagePosForIndex(i),
+						ease = Ease.CUBIC_IN_OUT,
+					}
+				}
+			}
+		}
+		var startTimeout = function(messageField){
+			if("timeoutHandle" in messageField){
+				messageField.removeTimeout(messageField.timeoutHandle)
+				// messageField.pos = messagePosForIndex(@debugMessages.numChildren)
+				// messageField.detach()
+				// reposMessages()
+			}
+			messageField.timeoutHandle = messageField.addTimeout(params.time || 10, function(){
+				messageField.addTweenAction {
+					duration = 1,
+					opacity = 0,
+					detachTarget = true,
+					doneCallback = reposMessages,
+				}
+			})
+		}
+		if(params.id){
+			for(var i, messageField in @debugMessages){
+				if(messageField.messageId === params.id){
+					messageField.text = params.message
+					startTimeout(messageField)
+					return
+				}
+			}
+		}
+		var maxNumMessages, messageHeight, border = 7, 30, 50
+		var messagePosForIndex = function(i){
+			return vec2(@width * 0.1, @height - border - i * messageHeight)
+		}
+		var numMessages = @debugMessages.numChildren
+		if(numMessages > maxNumMessages){
+			while(numMessages > maxNumMessages){
+				@debugMessages.firstChild.detach()
+				numMessages--
+			}
+			reposMessages(0)
+		}
+		var messageField = TextField().attrs {
+			resFont = res.get("test"),
+			vAlign = TEXT_VALIGN_BOTTOM,
+			hAlign = TEXT_HALIGN_CENTER,
+			text = params.message,
+			pos = messagePosForIndex(numMessages),
+			color = Color(0.7, 0.7, 0.7),
+			// borderColor = Color.BLACK,
+			// borderVisible = false,
+			parent = @debugMessages,
+			messageId = params.id || null,
+		}
+		startTimeout(messageField)
+	},
+	
+	showPaintBrush = function(pos){
+		var brushSize = 2
+		var itemInfo = ITEMS_INFO[@selectedHudSlot.type]
+		assert(itemInfo.canPaint)
+		var tileInfo = 
 	},
 	
 	createBlood = function(value){
@@ -950,8 +865,8 @@ Game4X = extends BaseGame4X {
 			@modalView.closeCallback = null
 
 			if(@modalView.pauseGame){
-				@view.clock.resume()
-				@resumeActor(@view)
+				@map.clock.resume()
+				@resumeActor(@map)
 			}
 			
 			closeCallback() // use callback's this instead of @modalView
@@ -963,8 +878,8 @@ Game4X = extends BaseGame4X {
 		
 		@modalView.pauseGame = !!@saveSlotNum
 		if(@modalView.pauseGame){
-			@view.clock.pause()
-			@pauseActor(@view)
+			@map.clock.pause()
+			@pauseActor(@map)
 		}
 		
 		@modalView.visible = true
@@ -1041,6 +956,33 @@ Game4X = extends BaseGame4X {
 		}
 	},
 	
+	createLevelPhysBorder = function(){
+		var bodyDef = PhysBodyDef()
+		bodyDef.type = PHYS_BODY_STATIC
+		// bodyDef.pos = @pos
+		// bodyDef.linearDamping = 0.99
+		// bodyDef.angularDamping = 0.99
+		// bodyDef.isSleepingAllowed = false
+		@borderBody = @physWorld.createBody(bodyDef)
+		
+		var createBoundsFixture = function(a, b){
+			// var halfSize = (b - a) / 2
+			// var center = (a + b) / 2
+			var fixtureDef = PhysFixtureDef()
+			// fixtureDef.type = PHYS_SHAPE_POLYGON
+			// fixtureDef.setPolygonAsBox(halfSize, center, 0)
+			fixtureDef.setPolygonAsBounds(a, b)
+			fixtureDef.categoryBits = PHYS_CAT_BIT_SOLID | PHYS_CAT_BIT_CAST_SHADOW
+			fixtureDef.friction = 0.99
+			@borderBody.createFixture(fixtureDef)
+		}
+		var borderTileSize = 10
+		createBoundsFixture(@tileToPos(-borderTileSize, -borderTileSize), @tileToPos(0, @tiledmapHeight+borderTileSize))
+		createBoundsFixture(@tileToPos(@tiledmapWidth, -borderTileSize), @tileToPos(@tiledmapWidth+borderTileSize, @tiledmapHeight+borderTileSize))
+		createBoundsFixture(@tileToPos(0, -borderTileSize), @tileToPos(@tiledmapWidth, 0))
+		createBoundsFixture(@tileToPos(0, @tiledmapHeight), @tileToPos(@tiledmapWidth, @tiledmapHeight+borderTileSize))
+	},
+	
 	initLevel = function(){
 		if(@saveSlotNum){
 			var saveSlot = GAME_SETTINGS.saveSlots[@saveSlotNum]
@@ -1076,6 +1018,7 @@ Game4X = extends BaseGame4X {
 		@tiledmapWidth = level.width
 		@tiledmapHeight = level.height
 		@tiledmapFloor = level.floor
+		@createLevelPhysBorder()
 		
 		// load
 		var saveJsonFilename = "save-${@saveSlotNum}-${levelNum}-${xor}.json"
@@ -1103,20 +1046,31 @@ Game4X = extends BaseGame4X {
 				@loadGameState(levelSave.state)
 				@registerLevelData(@tiledmapWidth, @tiledmapHeight, data)
 				for(var _, obj in levelSave.entities){
-					@addTiledmapEntity(obj, obj.state) // .x, obj.y, obj.gid, obj.type)
+					@addEntity(obj, obj.state) // .x, obj.y, obj.gid, obj.type)
+				}
+				for(var _, obj in levelSave.items){
+					@addTileItem(obj, obj.state) // .x, obj.y, obj.gid, obj.type)
 				}
 				print "game level is loaded"
 				return true
 			}catch(e){
-				print "exception: ${e.message}"
+				// do print exception info
+				if(e is CompilerException){
+					print "Exception: '${e.message}' in ${e.file}(${e.line},${e.pos}), token: ${e.token}\n${e.lineString.trim()}"
+				}else{
+					print "Exception: '${e.message}'"
+				}
 				printBackTrace(e.trace)
 				return notLoaded(e.message)
 			}
 		}
 		if(!loaded){
 			@registerLevelData(@tiledmapWidth, @tiledmapHeight, data)
-			for(var _, obj in level.groups.entities.objects){
-				@addTiledmapEntity(obj) // .x, obj.y, obj.gid, obj.type)
+			for(var _, obj in level.entities){
+				@addEntity(obj) // .x, obj.y, obj.gid, obj.type)
+			}
+			for(var _, obj in level.items){
+				@addTileItem(obj) // .x, obj.y, obj.gid, obj.type)
 			}
 			print "game level is initialized"
 		}
@@ -1176,7 +1130,7 @@ Game4X = extends BaseGame4X {
 		var rect = ColorRectSprite().attrs {
 			size = @size,
 			color = Color.BLACK,
-			priority = GAME_PRIORITY_FADEIN,
+			priority = GAME_LAYER_FADE,
 			opacity = 0,
 			parent = this,
 		}
@@ -1209,6 +1163,9 @@ Game4X = extends BaseGame4X {
 		@removeChildren()
 		@detach()
 		@clear()
+		// @destroyPhysicsWorld()
+		@physWorld.destroy()
+		@physWorld = null
 		gc.full()
 		print "end game cleanup, max alloc: ${gc.allocatedBytes}, used: ${gc.usedBytes}"
 	},
@@ -1239,43 +1196,16 @@ Game4X = extends BaseGame4X {
 		return child.localToGlobal(pos || vec2(0, 0), this)
 	},
 	
-	initEntTile = function(ent, tx, ty){
-		DEBUG && assert(!@tileEnt["${tx}-${ty}"])
-		ent.tileX, ent.tileY = tx, ty
-		ent.pos = @tileToCenterPos(tx, ty)
-		@tileEnt["${tx}-${ty}"] = ent
+	initEntPos = function(ent, x, y){
+		ent.pos = vec2(x, y) // @tileToCenterPos(tx, ty)
 	},
 	
-	setEntTile = function(ent, tx, ty){
-		if(ent.tileX != tx || ent.tileY != ty){
-			var key = "${ent.tileX}-${ent.tileY}"
-			DEBUG && assert(@tileEnt[key] === ent, "tile busy at ${ent.tileX}x${ent.tileY} by ${@tileEnt[key].tileX}x${@tileEnt[key].tileY}")
-			delete @tileEnt[key]
-			ent.prevTileX, ent.prevTileY = ent.tileX, ent.tileY
-			ent.tileX, ent.tileY = tx, ty
-			@tileEnt["${tx}-${ty}"] = ent
-		}
-	},
-	
-	unsetEntTile = function(ent){
-		var key = "${ent.tileX}-${ent.tileY}"
-		DEBUG && assert(@tileEnt[key] === ent)
-		delete @tileEnt[key]
-		ent.tileX, ent.tileY = -1, -1
-	},
-	
-	getTileEnt = function(tx, ty){
-		return @tileEnt["${tx}-${ty}"]
-	},
-	
-	getAutoFrontType = function(tx, ty){
-		var tile = @getTile(tx, ty)
-		tile.openState > 0.7 && return TILE_TYPE_EMPTY
-		return @getFrontType(tx, ty)
+	initTileItemPos = function(item, tx, ty){
+		item.pos = @tileToPos(tx, ty)
 	},
 	
 	explodeTileItem = function(tx, ty, radius, wait){
-		@getTile(tx, ty).explodeItem()
+		// @getTile(tx, ty).explodeItem()
 	},
 	
 	playBlockSound = function(){
@@ -1355,17 +1285,18 @@ Game4X = extends BaseGame4X {
 		}
 	},
 	
-	removeCrack = function(tx, ty, cleanup){
-		var key = "${tx}-${ty}"
-		var crack = @tileCracks[key]
+	deleteCrack = function(tx, ty){
+		var id = @getTileId(tx, ty) // "${tx}-${ty}"
+		var crack = @tileCracks[id]
 		if(crack){
-			delete @tileCracks[key]
+			delete @tileCracks[id]
 			crack.detach()
-			cleanup && @cleanupActor(crack) // .cleanup()
+			@cleanupActor(crack) // .cleanup()
 		}
 	},
 	
 	pickTile = function(tx, ty, byTouch){
+		return;
 		if(math.abs(@player.tileX - tx) > 1 || math.abs(@player.tileY - ty) > 1){
 			// playErrClickSound()
 			return
@@ -1376,7 +1307,7 @@ Game4X = extends BaseGame4X {
 		if(!tileInfo.strength){
 			var soundPlayed = false
 			if(!tile.pickByEnt(@player)){
-				if(Player.pickItemType && type != TILE_TYPE_EMPTY){
+				if(Player.pickItemType && type != ELEM_TYPE_EMPTY){
 					@playBlockSound()
 					@checkBombBubble(@player, tx, ty)
 					soundPlayed = true
@@ -1412,8 +1343,8 @@ Game4X = extends BaseGame4X {
 			}
 			return
 		}
-		var key = "${tx}-${ty}"
-		var crack = @tileCracks[key] || @{
+		var id = @getTileId(tx, ty) // "${tx}-${ty}"
+		var crack = @tileCracks[id] || @{
 			var pos = @tileToCenterPos(tx, ty)
 			var crack = Sprite().attrs {
 				resAnim = res.get("crack"),
@@ -1425,7 +1356,7 @@ Game4X = extends BaseGame4X {
 				// tileY = ty,
 				// tileType = type,
 				touchEnabled = false,
-				parent = @layers[LAYER_DECALS],
+				parent = @mapLayers[MAP_LAYER_DECALS],
 				damageDelay = tileInfo.damageDelay || 0.3,
 				strength = strength, 
 				damage = -1,				
@@ -1441,30 +1372,30 @@ Game4X = extends BaseGame4X {
 				crack.angle = 90*3
 			}
 			crack.scaleY = math.random() < 0.5 ? -1 : 1
-			@tileCracks[key] = crack
+			@tileCracks[id] = crack
 			return crack
 		}
 		// print "tile ${tx}x${ty} strength: ${crack.damage+1}/${strength} , deep: ${math.round(deepStrength, 2)}, damage: ${damage}"
 		if(byTouch || crack.nextDamageTime <= @time){
 			if(++crack.damage >= crack.strength-1){
 				crack.detach()
-				delete @tileCracks[key]
+				delete @tileCracks[id]
 				@cleanupActor(crack)
 				
-				@setFrontType(tx, ty, TILE_TYPE_EMPTY)
+				@setFrontType(tx, ty, ELEM_TYPE_EMPTY)
 				if(tile.itemType != ITEM_TYPE_EMPTY){
 					if(@takeTileItem(tile.itemType, tx, ty)){
 						@player.playTakeItemSound()
 					}
 				}
-				@removeTile(tx, ty, true)
-				@updateTile(tx, ty)
-				@updateTiledmapShadowViewport(tx-1, ty-1, tx+1, ty+1, true)
+				@deleteTile(tile)
+				// @updateTile(tx, ty)
+				@updateMapTiles(tx-1, ty-1, tx+1, ty+1, true)
 				@playRockBreakSound()
 				return true
 			}
 			crack.nextDamageTime = @time + crack.damageDelay
-			@player.useStaminaByCrack()
+			@player.useDigStamina()
 			@playDigSound()
 		}
 		crack.resAnimFrameNum = (crack.damage+1) * crack.resAnim.totalFrames / crack.strength
@@ -1482,14 +1413,13 @@ Game4X = extends BaseGame4X {
 			}, Ease.CUBIC_IN_OUT)
 			@backpackIcon.replaceAction("note", action)
 			return true
-		}else{
-			@backpackIcon.color = Color.WHITE
-			@backpackIcon.replaceTweenAction {
-				name = "note",
-				duration = 0.5,
-				color = Color(1, 0, 0),
-				ease = Ease.PING_PONG
-			}
+		}
+		@backpackIcon.color = Color.WHITE
+		@backpackIcon.replaceTweenAction {
+			name = "note",
+			duration = 0.5,
+			color = Color(1, 0, 0),
+			ease = Ease.PING_PONG
 		}
 	},
 	
@@ -1515,10 +1445,11 @@ Game4X = extends BaseGame4X {
 		return sprintf("${group}-%03d", i)
 	},
 	
-	getTileResName = function(group, i, x, y, b){
-		b && return @getResName(group, i, @getTileRandomInt(x, y, 1, b))
-		// x && return @getResName(group, i, x)
-		return @getResName(group, i)
+	getTileResName = function(elem, x, y){
+		if(elem.variants){
+			return elem.variants[@getTileRandomInt(x, y, #elem.variants)]
+		}
+		return elem.res
 	},
 	
 	getSlotItemResName = function(type){
@@ -1531,10 +1462,6 @@ Game4X = extends BaseGame4X {
 			return @getTileResName("tile-item", type, x, y, info.variants)
 		}
 		return @getSlotItemResName(type)
-	},
-	
-	getTile = function(x, y){
-		return @tiles["${x}-${y}"]
 	},
 	
 	touchGroupRes = function(group, type){
@@ -1557,7 +1484,17 @@ Game4X = extends BaseGame4X {
 	},
 	
 	touchTileRes = function(type){
-		@touchGroupRes("tile", type)
+		type == ELEM_TYPE_EMPTY && return;
+		var elem = ELEMENTS_LIST[type] || throw "element type ${type} not found"
+		if(elem.variants){
+			for(var _, resName in elem.variants){
+				res.get(resName)
+				elem.glowing && res.get(resName.."-glowing")
+			}
+		}else{
+			res.get(elem.res)
+			elem.glowing && res.get(elem.res.."-glowing")
+		}
 	},
 	
 	touchItemRes = function(type){
@@ -1567,34 +1504,7 @@ Game4X = extends BaseGame4X {
 		}
 	},
 	
-	updateTile = function(x, y){
-		var tile = @getTile(x, y)
-		if(!tile){
-			var type = @getFrontType(x, y)
-			tile = _G[TILES_INFO[type].class || "Tile"](this, x, y)
-			// tile = Tile(this, x, y)
-		}
-		tile.time = @time
-	},
-	
-	updateTiledmapShadowViewport = function(ax, ay, bx, by, recreate){
-		for(var y = ay; y <= by; y++){
-			for(var x = ax; x <= bx; x++){
-				var tile = @getTile(x, y)
-				tile.updateShadow(recreate)
-			}
-		}
-	},
-	
-	updateTiledmapViewport = function(ax, ay, bx, by, recreate){
-		for(var y = ay; y <= by; y++){
-			for(var x = ax; x <= bx; x++){
-				@updateTile(x, y)
-			}
-		}
-		@updateTiledmapShadowViewport(ax, ay, bx, by, recreate)
-	},
-	
+
 	playerDead = function(){
 		@reloadGame()
 		return
@@ -1609,7 +1519,7 @@ Game4X = extends BaseGame4X {
 		// @unsetEntTile(@player)
 		// @initEntTile(@player, Player.saveTileX, Player.saveTileY)
 		
-		@player = Player(this, Player.saveType)
+		@player = NewPlayer(this, Player.saveType)
 		@initEntTile(@player, Player.saveTileX, Player.saveTileY)
 		@centerViewToTile(Player.saveTileX, Player.saveTileY)
 		
@@ -1620,35 +1530,30 @@ Game4X = extends BaseGame4X {
 		})
 	},
 	
-	addTiledmapItem = function(obj, state){
-		var itemInfo = ENTITY_ITEMS_INFO[obj.gid]
-		if(obj.gid > 0){
-			var ent = _G[itemInfo.class || "EntItem"](this, obj.gid)
-			if(state){
-				ent.loadState(state)
-			}else{
-				ent.initObject(obj)
-			}
-			return ent
+	addTileItem = function(obj, state){
+		var elem = ELEMENTS_LIST[obj.type] || throw "unknown item: ${obj}"
+		var item = _G[elem.class || "TileItem"](this, elem.type)
+		if(state){
+			item.loadState(state)
+		}else{
+			item.initItem(obj)
 		}
-		throw "unknown entity tiledmap type: ${obj.gid}"
+		return item
 	},
 	
-	addTiledmapEntity = function(obj, state){
-		if(obj.objType == "item"){
-			return @addTiledmapItem(obj, state)
-		}
-		var entInfo = ENTITIES_INFO[obj.gid]
-		if(entInfo.class === "Player"){
+	addEntity = function(obj, state){
+		var elem = ELEMENTS_LIST[obj.type] || throw "unknown entity: ${obj}"
+		if(elem.type == ELEM_TYPE_ENT_PLAYER){
 			@player && throw "player is already exist"
-			@player = Player(this, obj.gid)
+			@player = NewPlayer(this, elem.type)
 			if(state){
 				@player.loadState(state)
 			}else{
-				@player.initObject(obj)
+				@player.initEntity(obj)
 				// @initEntTile(@player, obj.x, obj.y)
 			}
-			Player.saveType = obj.gid
+			/*
+			Player.saveType = elemInfo.type
 			Player.saveTileX = @player.tileX
 			Player.saveTileY = @player.tileY
 			@centerViewToTile(@player.tileX, @player.tileY)
@@ -1657,8 +1562,10 @@ Game4X = extends BaseGame4X {
 					@bubbleItem(@player, @player.tileX, @player.tileY, ITEM_TYPE_SHOVEL)
 				}
 			})
+			*/
 			return @player
 		}
+		return; // debug
 		if(obj.gid > 0){
 			var ent = _G[entInfo.class || "Monster"](this, obj.gid)
 			if(state){
@@ -1673,12 +1580,84 @@ Game4X = extends BaseGame4X {
 		throw "unknown entity tiledmap type: ${obj.gid}"
 	},
 	
-	removeTile = function(tx, ty, cleanup){
+	getTileId = function(x, y){
+		return (y|0)*1000000 + (x|0)
+	},
+	
+	getTile = function(x, y){
+		return @tiles[@getTileId(x, y)]
+	},
+	
+	setTile = function(tile){
+		@tiles[tile.tileId] && throw "tile is already exist"
+		@tiles[tile.tileId] = tile
+	},
+	
+	deleteTile = function(x, y){
+		var id = x is Tile ? x.tileId : @getTileId(x, y)
+		@tiles[id].cleanup()
+		delete @tiles[id]
+	},
+
+	/* deleteTileAt = function(x, y){
+		var id = @getTileId(x, y)
+		@tiles[id].cleanup()
+		delete @tiles[id]
+	}, */
+	
+	updateTile = function(x, y){
+		var tile = @getTile(x, y) || @{
+			var tile = Tile(this, x, y)
+			// @setTile(tile)
+			tile === @getTile(x, y) || throw "error set tile"
+			return tile
+		}
+		tile.time = @time
+		return tile
+	},
+	
+	updateMapTiles = function(ax, ay, bx, by, recreate){
+		for(var y = ay; y <= by; y++){
+			for(var x = ax; x <= bx; x++){
+				var tile = @updateTile(x, y)
+				tile.updateShadow(recreate)
+			}
+		}
+	},
+	
+	updateMapTilesViewport = function(ax, ay, bx, by, recreate){
+		for(var y = ay; y <= by; y++){
+			for(var x = ax; x <= bx; x++){
+				@updateTile(x, y)
+			}
+		}
+		// @updateMapTiles(ax, ay, bx, by, recreate)
+		for(var _, tile in @tiles){
+			// @markTileVisibility(tile, tile.time == @time)
+			if(tile.time != @time){
+				@deleteTile(tile)
+			}else{
+				tile.updateShadow(recreate)
+			}
+		}
+		/* for(var _, tile in @tiles){
+			tile.updateShadow(recreate)
+		} */
+	},
+	
+	/* updateViewport = function(startX, startY, endX, endY){
+		@updateTiledmapViewport(startX, startY, endX, endY)
+		for(var _, tile in @tiles){ // @mapLayers[MAP_LAYER_TILES]){
+			@markTileVisibility(tile, tile.time == @time)
+		}
+	}, */
+	
+	/* removeTile = function(tx, ty, cleanup){
 		var key = "${tx}-${ty}"
 		var tile = @tiles[key]
 		if(tile){
 			delete @tiles[key]
-			tile.detach()
+			// tile.detach()
 			cleanup && @cleanupActor(tile) // .cleanup()
 		}
 	},
@@ -1695,52 +1674,42 @@ Game4X = extends BaseGame4X {
 	
 	markEntVisibility = function(ent, visible){
 		
-	},
+	}, */
 	
 	centerViewToTile = function(tx, ty){
-		var pos = @tileToCenterPos(tx, ty) - @centerViewPos / @view.scale
-		@viewPos = -pos * @view.scale
-		// @view.pos = -pos * @view.scale
-		// @glowingTiles.pos = @view.pos
-		// @updateView()
+		var pos = @tileToCenterPos(tx, ty) - @centerViewPos / @map.scale
+		@mapPos = -pos * @map.scale
 	},
 	
-	__get@viewPos = function(){
-		return @view.pos
+	__get@mapPos = function(){
+		return @map.pos
 	},
-	__set@viewPos = function(value){
-		@glowingTiles.pos = @speechBubbles.pos = @debugTiles.pos = @view.pos = value
+	__set@mapPos = function(value){
+		@map.pos = value
+		@lightmapLayer.pos = -value / @map.scale
+		@lightmapLayer.scale = 1 / @map.scale
 	},
 	
-	/* followPlayer = function(){
-		var viewScale = @view.scale
-		var idealPos = (@size / 2 / viewScale - @player.pos) * viewScale
-		var pos = @view.pos
-		pos = pos + (idealPos - pos) * math.min(1, 3.0 * @dt)
-		
-		var maxOffs = @size * 0.3 / viewScale
-		if(idealPos.x - pos.x > maxOffs.x){
-			pos.x = idealPos.x - maxOffs.x
-		}else if(idealPos.x - pos.x < -maxOffs.x){
-			pos.x = idealPos.x + maxOffs.x
-		}
-		if(idealPos.y - pos.y > maxOffs.y){
-			pos.y = idealPos.y - maxOffs.y
-		}else if(idealPos.y - pos.y < -maxOffs.y){
-			pos.y = idealPos.y + maxOffs.y
-		}
-		
-		// pos.x = math.round(pos.x) // * @view.scaleX)
-		// pos.y = math.round(pos.y) // * @view.scaleY)
-		
-		@view.pos = pos
-		@glowingTiles.pos = pos
-		
-		@updateView()
-	}, */
+	__get@mapScale = function(){
+		return @map.scale
+	},
+	__set@mapScale = function(value){
+		@setMapScale(value)
+	},
+	
+	setMapScale = function(scale, pos){
+		pos || pos = @player.pos
+		var posScreenScale = (pos + @map.pos / @map.scale) / (@size / @map.scale)
+		@map.scale = scale
+		@mapPos = (posScreenScale * (@size / @map.scale) - pos) * @map.scale
+	},
 	
 	tileToCenterPos = function(x, y){
 		return vec2((x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE)
+	},
+	
+	tileToCenterValue = function(x){
+		return (x + 0.5) * TILE_SIZE
 	},
 	
 	tileToPos = function(x, y){
@@ -1751,6 +1720,10 @@ Game4X = extends BaseGame4X {
 		return math.floor(pos.x / TILE_SIZE), math.floor(pos.y / TILE_SIZE)
 	},
 	
+	singlePosToTile = function(pos){
+		return math.floor(pos / TILE_SIZE)
+	},
+	
 	posToCeilTile = function(pos){
 		return math.ceil(pos.x / TILE_SIZE), math.ceil(pos.y / TILE_SIZE)
 	},
@@ -1759,62 +1732,79 @@ Game4X = extends BaseGame4X {
 		return math.round(pos.x / TILE_SIZE), math.round(pos.y / TILE_SIZE)
 	},
 	
-	updateViewport = function(startX, startY, endX, endY){
-		@updateTiledmapViewport(startX, startY, endX, endY)
-		for(var _, tile in @layers[LAYER_TILES]){
-			@markTileVisibility(tile, tile.time == @time)
-		}
-	},
-	
-	updateView = function(){
-		var offs = -@view.pos / @view.scale
-		var startX, startY = @posToTile(offs)
-		var edge = 0
-		startX, startY = startX - edge-1, startY - edge
-		if(startX != @oldViewTilePosX || startY != @oldViewTilePosY){
-			@oldViewTilePosX, @oldViewTilePosY = startX, startY
-			
-			var endOffs = offs + @size / @view.scale
-			var endX, endY = @posToCeilTile(endOffs)
-			endX, endY = endX + edge+1, endY + edge
-			
-			@updateTiledmapViewport(startX, startY, endX, endY)
-			
-			/* for(var i = @numLights-1; i >= 0; i--){
-				var light = @getLight(i)
-				var startLightX, startLightY = @posToTile(light.pos - light.radius)
-				var endLightX, endLightY = @posToCeilTile(light.pos + light.radius)
-				if(startLightX <= endX && endLightX >= startX
-					&& startLightY <= endY && endLightY >= startY)
-				{
-					@updateTiledmapViewport(startLightX, startLightY, endLightX, endLightY)
-				}
-			} */
-			
-			for(var _, tile in @layers[LAYER_TILES]){
-				@markTileVisibility(tile, tile.time == @time)
-			}
-			// print "alive tiles: ${#@layers[LAYER_TILES]}"
-		}
-	},
-	
 	shakeCamera = function(size, time){
 		time || time = 2
 		size = size * TILE_SIZE
-		@view.removeUpdate(@shakeUpdateHandle)
 		var accumTime = 0
-		@shakeUpdateHandle = @view.addUpdate(function(ev){
+		@map.removeUpdate(@shakeUpdateHandle)
+		@shakeUpdateHandle = @map.addUpdate(function(ev){
 			accumTime += ev.dt
 			if(accumTime > time){
-				@view.removeUpdate(@shakeUpdateHandle)
+				@map.removeUpdate(@shakeUpdateHandle)
 				@shakeUpdateHandle = null
 				return
 			}
 			var t = Ease.run(1 - accumTime / time, Ease.CUBIC_OUT)
 			// var t = 1 - accumTime / time
-			var shakeOffs = vec2(randSign() * size * t, randSign() * size * t)
-			@viewPos += shakeOffs
+			@shakeOffs = vec2(randSign() * size * t, randSign() * size * t)
 		})
+	},
+	
+	followPlayer = function(){
+		if(!@draggingPos){
+			var mapPos, mapScale = @mapPos, @mapScale
+			var idealPos = (@size / 2 / mapScale - @player.pos) * mapScale
+			idealPos.x = math.round(idealPos.x)
+			idealPos.y = math.round(idealPos.y)
+			if(idealPos != mapPos){
+				var maxOffs = @size * vec2(0.3, 0.1) / mapScale
+				// var maxOffs = @size * vec2(0.0, 0.0) / mapScale
+				if(@dragging){
+					mapPos = mapPos + (idealPos - mapPos) * 0.1
+
+					var validPos = 0
+					if(idealPos.x - mapPos.x > maxOffs.x){
+					}else if(idealPos.x - mapPos.x < -maxOffs.x){
+					}else{
+						validPos++
+					}
+					if(idealPos.y - mapPos.y > maxOffs.y){
+					}else if(idealPos.y - mapPos.y < -maxOffs.y){
+					}else{
+						validPos++
+					}
+					if(validPos == 2){
+						var posScreenScale = (@player.pos + mapPos / mapScale) / (@size / mapScale)
+						if(posScreenScale > 0.2 && posScreenScale < 0.8){
+							@dragging = false
+							// @addDebugMessage("fix dragging: ${posScreenScale}")
+						}else{
+							// @addDebugMessage("in fixing dragging: ${posScreenScale}")
+						}
+					}else{
+						// @addDebugMessage("validPos: ${validPos}")
+					}
+				}else{
+					mapPos = mapPos + (idealPos - mapPos) * math.min(1, 3 * @dt)
+
+					if(idealPos.x - mapPos.x > maxOffs.x){
+						mapPos.x = idealPos.x - maxOffs.x
+					}else if(idealPos.x - mapPos.x < -maxOffs.x){
+						mapPos.x = idealPos.x + maxOffs.x
+					}
+					if(idealPos.y - mapPos.y > maxOffs.y){
+						mapPos.y = idealPos.y - maxOffs.y
+					}else if(idealPos.y - mapPos.y < -maxOffs.y){
+						mapPos.y = idealPos.y + maxOffs.y
+					}
+				}
+				@mapPos = mapPos
+			}else{
+				// @addDebugMessage("idealPos: ${idealPos.x} ${idealPos.y}, ${mapPos.x} ${mapPos.y}")
+			}
+		}else{
+			// @addDebugMessage("draggingPos: ${@draggingPos}")
+		}
 	},
 	
 	update = function(ev){
@@ -1830,7 +1820,7 @@ Game4X = extends BaseGame4X {
 				"update" in obj && obj.update()
 			}
 		} */
-		for(var _, sprite in @glowingTiles){
+		for(var _, sprite in @mapLayers[MAP_LAYER_TILE_GLOWING]){
 			if("glowPhase" in sprite == false){
 				sprite.glowPhase = math.random() * 100
 				sprite.glowTimeScale = math.random(0.7, 1.5)
@@ -1847,8 +1837,29 @@ Game4X = extends BaseGame4X {
 		} */
 		
 		// @followPlayer()
-		// @updateLightLayer(@lightLayer)
-		@updateCamera(@lightLayer)
+		// @updateLightLayer(@lightmap)
+		if(@shakeOffs){
+			@mapPos = @mapPos + @shakeOffs
+			@shakeOffs = null
+		}
+		// @mapScale = ((math.sin(math.PI * 2 * @time / 10) + 1) / 2 * 0.95 + 0.05) * @initialMapScale
+		// @physWorld.persistentDeltaTime = 0
+		@physWorld.persistentDeltaTime = 1 / 60
+		// @physWorld.persistentDeltaTime = clamp(@dt, 1 / 60, 1 / 10)
+		@physWorld.update(@dt, 1, 1)
+		
+		@player.updatePos()
+		@followPlayer()
+		@updateLightmap(@lightmap)
+		
+		/* for(var _, body in @physWorld.bodyList){
+			// TODO: apply body pos and angle to actor
+		} */
+		
+		/* var offs = -@mapPos
+		@physWorld.queryAABB(PhysAABB(offs, offs + @lightmap.size), function(fixture, body){
+			print "queryAABB, body: ${body.pos}, ${fixture.body.pos}"
+		}) */
 	},
 	
 	/* checkFalling = function(){
@@ -1858,7 +1869,7 @@ Game4X = extends BaseGame4X {
 			var tile = @getTile(tx, ty)
 			if(!(tile is Door)){
 				type = @getFrontType(tx, ty + 1)
-				if(type != TILE_TYPE_EMPTY){
+				if(type != ELEM_TYPE_EMPTY){
 					var tile = @getTile(tx, ty - 1)
 					tile.startFalling()
 				}

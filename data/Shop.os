@@ -55,14 +55,14 @@ Shop = extends Actor {
 			
 			@pack.items = {
 				{type = ITEM_TYPE_FOOD_01},
-				{type = ITEM_TYPE_LADDERS},
+				{type = ITEM_TYPE_LADDER},
 			}
 			var itemKeys = SHOP_ITEMS_INFO.keys
 			var pickDamageItemFound = false
 			while(#@pack.items < @pack.numSlots && #itemKeys > 0){
 				var i = math.random(#itemKeys)
 				var type = itemKeys[i]
-				if(type != ITEM_TYPE_FOOD_01 && type != ITEM_TYPE_LADDERS && type != ITEM_TYPE_SHOVEL){
+				if(type != ITEM_TYPE_FOOD_01 && type != ITEM_TYPE_LADDER && type != ITEM_TYPE_SHOVEL){
 					var isPickDamageItem = SHOP_ITEMS_INFO[type].pickDamage > 0
 					if(!isPickDamageItem || !pickDamageItemFound){
 						@pack.items[] = {type = type}
@@ -123,6 +123,8 @@ Shop = extends Actor {
 		}
 		bg.width = slot.x + slot.width + borderSize
 		bg.height = slot.y + slot.height + borderSize
+		
+		BoxShadow(bg)
 		
 		@title = PanelTitle(bg, _T("Trader"), bg.color) // Color(0.99, 0.99, 0.7))
 		@title.x = bg.width - @title.width

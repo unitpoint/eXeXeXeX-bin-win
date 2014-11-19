@@ -100,6 +100,7 @@ DragndropItems = extends Actor {
 			}
 		})
 
+		var isWindows = PLATFORM == "windows"
 		@moveEventId = stage.addEventListener(TouchEvent.MOVE, function(ev){
 			if(@itemSelected){ // ev.target.name == "backpackSlot"){
 				// print "move: "..ev.localPos
@@ -119,7 +120,7 @@ DragndropItems = extends Actor {
 					slot is ModalView && slot = null
 					if(slot !== @targetSlot){
 						@targetSlot = slot
-						if(slot is Tile){
+						if(slot is BaseLayerTile){
 							slot.touch()
 						}else if(slot){
 							slot.color = Color.WHITE
@@ -132,6 +133,9 @@ DragndropItems = extends Actor {
 						}
 					}
 				}
+			}else if(isWindows && @game.selectedHudSlot && ITEMS_INFO[@game.selectedHudSlot.type].canPaint){
+				var mapPos = @game.map.globalToLocal(curTouchPos)
+				@game.showPaintBrush(mapPos)
 			}
 		})
 		
@@ -187,6 +191,7 @@ DragndropItems = extends Actor {
 			playMenuClickSound()
 			var itemInfo = owner.pack.items[@itemSlot.slotNum]
 			@targetSlot.type = itemInfo.type
+			@targetSlot.isSelected = true
 			@itemSelected.pos = @itemSlot.size/2
 			@itemSelected.parent = @itemSlot
 			@itemSelected.color = Color.WHITE
@@ -418,7 +423,7 @@ DragndropItems = extends Actor {
 					}
 				}
 			}
-			if(@itemSlot.type == ITEM_TYPE_LADDERS && !@game.hasHudItem(@itemSlot.type)){
+			if(@itemSlot.type == ITEM_TYPE_LADDER && !@game.hasHudItem(@itemSlot.type)){
 				for(var _, slot in @game.hudSlots){
 					if(!slot.type){
 						slot.type = @itemSlot.type
@@ -446,10 +451,12 @@ DragndropItems = extends Actor {
 	
 	breakHudDragndrop = function(){
 		@itemSlot.updateItem()
+		// playErrClickSound()
 		if(!@moved){ // @targetSlot == @itemSlot){
-			@itemSlot.useItem()
+			// @itemSlot.useItem()
+			@itemSlot.isSelected = !@itemSlot.isSelected
 		}else{
-			playErrClickSound()
+			// playErrClickSound()
 		}
 	},
 	
@@ -457,12 +464,12 @@ DragndropItems = extends Actor {
 		if((actor is ItemSlot && actor.owner is Backpack) || actor is HudSlot){
 			return true
 		}
-		if(actor is Tile){
+		if(actor is BaseLayerTile){
 			var type = @itemSlot.type
-			/* if(type == ITEM_TYPE_LADDERS){
+			/* if(type == ITEM_TYPE_LADDER){
 				return @game.player.canUseLaddersAt(actor.tileX, actor.tileY)
 			} */
-			return @game.player.canUseItemAt(type, actor.tileX, actor.tileY)
+			return @game.player.canUseItemAt(type, actor.tile.tileX, actor.tile.tileY)
 		}
 	},
 	
@@ -472,12 +479,13 @@ DragndropItems = extends Actor {
 		@itemSelected.parent = @itemSlot
 		@itemSelected.color = Color.WHITE
 		if(@targetSlot is HudSlot){
-			var srcType = @itemSlot.type
+			var srcType, srcSelected = @itemSlot.type, @itemSlot.isSelected
 			// var destType = @targetSlot.type
 			@itemSlot.type = @targetSlot.type
 			@targetSlot.type = srcType
-		}else if(@targetSlot is Tile){
-			var tx, ty = @targetSlot.tileX, @targetSlot.tileY
+			@targetSlot.isSelected = srcSelected
+		}else if(@targetSlot is BaseLayerTile){
+			var tx, ty = @targetSlot.tile.tileX, @targetSlot.tile.tileY
 			@game.player.useItemAt(@itemSlot.type, tx, ty)
 		}else{
 			assert(@targetSlot is ItemSlot && @targetSlot.owner is Backpack)

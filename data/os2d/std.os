@@ -46,7 +46,8 @@ function _T(text){
 
 function Object.__get(name){
 	if(@prototype !== Object || @getProperty("__instantiable", false) !== null){
-		throw "unknown \"${name}\" property in ${@__name || @classname}"
+		// throw "unknown \"${name}\" property in ${@__name || @classname}"
+		throw "unknown \"${name}\" property in ${@__name} <${typeOf(this)}#${@__id}:classname=${@classname}>"
 	}
 	return null
 }
@@ -624,6 +625,10 @@ function OS2DObject.reverseIter(){
 		// print "iter step: ${!!cur}, ${i}, ${cur}"
 		cur && return true, i--, cur
 	}
+}
+
+function Sprite.fixAnimRect(edge){
+	@setAnimFrameRect(edge, edge, @width-edge*2, @height-edge*2)
 }
 
 /*	

@@ -45,7 +45,7 @@ scale = math.min(scale.x, scale.y)
 stage.size = (displaySize / scale).round()
 stage.scale = displaySize / stage.size // scale
 
-logoEnabled = true
+logoEnabled = false
 
 lang = "ru"
 langStrings = require("langs/${lang}/strings.os", false)
@@ -65,10 +65,10 @@ GAME_SETTINGS = {
 		// sellItem = false,
 	},
 	saveSlots = {
-		/* 1 = {
-			levelNum = 1,
+		0 = {
+			levelNum = 3,
 			date = DateTime.now(),
-		}, */
+		},
 	},
 }
 
@@ -144,6 +144,7 @@ function playMoneySound(){
 
 var music, musicTimeout = null
 function playMusic(name, volume){
+	return;
 	var delay = 0.01
 	if(music){
 		music.fadeOut(2)
